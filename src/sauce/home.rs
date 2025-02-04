@@ -55,7 +55,7 @@ pub fn plot_component(props: &PlotProps) -> Html {
             for (i, (energy, cross_section)) in cache.energy_values.iter().zip(&cache.cross_section_values).enumerate() {
                 if cache.checkbox_selected[i] {
                     let trace = Scatter::new(energy.clone(), cross_section.clone())
-                        .name(&format!("Scatter Plot {}", cache.labels[i]));
+                        .name(&format!("{}", cache.labels[i]));
                     plot.add_trace(trace);
                 }
             }
@@ -166,7 +166,7 @@ async fn get_values_by_id(id: i32) -> Result<(Vec<f64>, Vec<f64>, String), reqwe
         console::log_1(&serde_wasm_bindgen::to_value("downloaded data").unwrap());
         console::log_1(&serde_wasm_bindgen::to_value(&downloaded_reaction_data).unwrap());
     
-    let label = entry.element.clone();
+    let label = entry.element.clone() + entry.nucleons.to_string().as_str() + " " + entry.reaction.as_str(); // + " " +entry.library.as_str()  +" " + entry.temperature.as_str();
     Ok((downloaded_reaction_data.energy_values, downloaded_reaction_data.cross_section_values, label))
 }
 
