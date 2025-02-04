@@ -1,6 +1,9 @@
-[Demo](https://shimwell.github.io/nuclide_cross_section_plotter.rs/)
+[Demo](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/)
 
-Install instructions on Ubuntu 22.04
+You can install the dependencies and build the web app.
+
+Instructions on Ubuntu 22.04
+
 ```
 sudo apt-get update
 sudo apt-get install curl
