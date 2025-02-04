@@ -4,7 +4,7 @@ use serde::Serialize;
 use web_sys::{console, HtmlInputElement, InputEvent};
 use yew_hooks::use_set;
 use yew_hooks::use_async;
-use yew_custom_components::pagination::Pagination;
+// use yew_custom_components::pagination::Pagination;
 use yew_custom_components::table::{Options, Table};
 use yew_custom_components::table::types::{ColumnBuilder, TableData};
 use crate::types::mock_data::Entry;
@@ -283,7 +283,7 @@ pub fn home() -> Html {
         filtered_data[start_index..end_index].to_vec()
     };
 
-    let total = filtered_data.len().max(1);
+    // let total = filtered_data.len().max(1);
 
     let oninput_element_search = {
         let element_search_term = element_search_term.clone();
@@ -333,21 +333,21 @@ pub fn home() -> Html {
         })
     };
 
-    let pagination_options = yew_custom_components::pagination::Options::default()
-        .show_prev_next(true)
-        .show_first_last(true)
-        .list_classes(vec!(String::from("pagination")))
-        .item_classes(vec!(String::from("page-item")))
-        .link_classes(vec!(String::from("page-link")))
-        .active_item_classes(vec!(String::from("active")))
-        .disabled_item_classes(vec!(String::from("disabled")));
+    // let pagination_options = yew_custom_components::pagination::Options::default()
+    //     .show_prev_next(true)
+    //     .show_first_last(true)
+    //     .list_classes(vec!(String::from("pagination")))
+    //     .item_classes(vec!(String::from("page-item")))
+    //     .link_classes(vec!(String::from("page-link")))
+    //     .active_item_classes(vec!(String::from("active")))
+    //     .disabled_item_classes(vec!(String::from("disabled")));
 
-    let handle_page = {
-        let page = page.clone();
-        Callback::from(move |new_page: usize| {
-            page.set(new_page);
-        })
-    };
+    // let handle_page = {
+    //     let page = page.clone();
+    //     Callback::from(move |new_page: usize| {
+    //         page.set(new_page);
+    //     })
+    // };
 
     html!(
         <>
