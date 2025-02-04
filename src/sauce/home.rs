@@ -408,26 +408,35 @@ pub fn home() -> Html {
                 </div>
             </div>
 
+            
+            <div class="d-flex mb-2">
+                <div class="flex-grow-1 p-2 input-group me-2">
+                <Table<TableLine> 
+                    options={options.clone()} 
+                    limit={Some(limit)} 
+                    page={current_page} 
+                    search={element_search.clone()} 
+                    classes={classes!("table", "table-hover")} 
+                    columns={columns.clone()} 
+                    data={paginated_data} 
+                    orderable={true}
+                />
+                <h5>{"Number selected"} <span class="badge text-bg-secondary">{sum}</span></h5>
+                </div>
+                <div class="flex-grow-1 p-2 input-group">
 
-            <Table<TableLine> 
-                options={options.clone()} 
-                limit={Some(limit)} 
-                page={current_page} 
-                search={element_search.clone()} 
-                classes={classes!("table", "table-hover")} 
-                columns={columns.clone()} 
-                data={paginated_data} 
-                orderable={true}
-            />
-            <Pagination 
-                total={total}
-                limit={limit} 
-                max_pages={6} 
-                options={pagination_options} 
-                on_page={Some(handle_page)}
-            />
-            <h5>{"Number selected"} <span class="badge text-bg-secondary">{sum}</span></h5>
-            <App selected_indexes={(*selected_indexes.current()).clone()} />
+                // <Pagination 
+                //     total={total}
+                //     limit={limit} 
+                //     max_pages={6} 
+                //     options={pagination_options} 
+                //     on_page={Some(handle_page)}
+                // />
+                <div class="flex-grow-1" style="width: 100%;">
+                    <App selected_indexes={(*selected_indexes.current()).clone()} />
+                </div>
+                </div>
+                </div>
         </>
     )
 }
