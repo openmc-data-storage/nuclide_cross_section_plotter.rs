@@ -200,7 +200,7 @@ pub fn home() -> Html {
 
     let columns = vec![
         ColumnBuilder::new("select").orderable(true).short_name("Select").data_property("select").header_class("user-select-none").build(),
-        ColumnBuilder::new("id").orderable(true).short_name("ID").data_property("id").header_class("user-select-none").build(),
+        // ColumnBuilder::new("id").orderable(true).short_name("ID").data_property("id").header_class("user-select-none").build(),
         ColumnBuilder::new("element").orderable(true).short_name("Element").data_property("element").header_class("user-select-none").build(),
         ColumnBuilder::new("nucleons").orderable(true).short_name("Nucleons").data_property("nucleons").header_class("user-select-none").build(),
         ColumnBuilder::new("reaction").orderable(true).short_name("Reaction").data_property("reaction").header_class("user-select-none").build(),
