@@ -27,6 +27,7 @@ pub struct XsCache {
     pub energy_values: Vec<Vec<f64>>,
     pub cross_section_values: Vec<Vec<f64>>,
     pub checkbox_selected: Vec<bool>,
+    pub labels: Vec<String>,
 }
 
 #[derive(Properties, PartialEq)]
@@ -54,14 +55,14 @@ pub fn plot_component(props: &PlotProps) -> Html {
             for (i, (energy, cross_section)) in cache.energy_values.iter().zip(&cache.cross_section_values).enumerate() {
                 if cache.checkbox_selected[i] {
                     let trace = Scatter::new(energy.clone(), cross_section.clone())
-                        .name(&format!("Scatter Plot {}", i));
+                        .name(&format!("Scatter Plot {}", cache.labels[i]));
                     plot.add_trace(trace);
                 }
             }
 
             let y_axis = plotly::layout::Axis::new()
                 .title("Cross section [barns]")
-                .show_line(true)
+                // .show_line(true)
                 .zero_line(true)
                 // .range(0)  not sure how to set lower value
                 .type_(if *is_y_log { AxisType::Log } else { AxisType::Linear });
@@ -69,7 +70,7 @@ pub fn plot_component(props: &PlotProps) -> Html {
             let x_axis = plotly::layout::Axis::new()
                 .title("Energy [eV]")
                 .zero_line(true)
-                .show_line(true)
+                // .show_line(true)
                 .type_(if *is_x_log { AxisType::Log } else { AxisType::Linear });
 
             let layout = plotly::Layout::new()
@@ -129,12 +130,14 @@ async fn generate_cache(selected: &HashSet<usize>) -> XsCache {
     let mut cache_energy_values = Vec::new();
     let mut cache_cross_section_values = Vec::new();
     let mut cache_checkbox_selected = Vec::new();
+    let mut cache_labels = Vec::new();
     console::log_1(&serde_wasm_bindgen::to_value("selected_id").unwrap());
     for &selected_id in selected.iter() {
-        let (energy, cross_section) = get_values_by_id(selected_id as i32).await.expect("Failed to get values by ID");
+        let (energy, cross_section, label) = get_values_by_id(selected_id as i32).await.expect("Failed to get values by ID");
         cache_energy_values.push(energy);
         cache_cross_section_values.push(cross_section);
         cache_checkbox_selected.push(true);
+        cache_labels.push(label);
         console::log_1(&selected_id.clone().into());
     }
 
@@ -142,10 +145,11 @@ async fn generate_cache(selected: &HashSet<usize>) -> XsCache {
         energy_values: cache_energy_values,
         cross_section_values: cache_cross_section_values,
         checkbox_selected: cache_checkbox_selected,
+        labels: cache_labels,
     }
 }
 
-async fn get_values_by_id(id: i32) -> Result<(Vec<f64>, Vec<f64>), reqwest::Error> {
+async fn get_values_by_id(id: i32) -> Result<(Vec<f64>, Vec<f64>, String), reqwest::Error> {
     let data = crate::types::mock_data::Data::default();
     let entry = data.data.iter().find(|entry| entry.id == id).expect("Entry not found");
     let output = convert_string(entry);
@@ -161,7 +165,9 @@ async fn get_values_by_id(id: i32) -> Result<(Vec<f64>, Vec<f64>), reqwest::Erro
         .await?;
         console::log_1(&serde_wasm_bindgen::to_value("downloaded data").unwrap());
         console::log_1(&serde_wasm_bindgen::to_value(&downloaded_reaction_data).unwrap());
-    Ok((downloaded_reaction_data.energy_values, downloaded_reaction_data.cross_section_values))
+    
+    let label = entry.element.clone();
+    Ok((downloaded_reaction_data.energy_values, downloaded_reaction_data.cross_section_values, label))
 }
 
 
