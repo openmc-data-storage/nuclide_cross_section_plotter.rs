@@ -1,0 +1,31 @@
+[package]
+name = "minimal-table"
+version = "0.1.0"
+edition = "2021"
+description = "A minimal overview of the table component from the yew-custom-components library"
+license = "MIT"
+repository = "https://github.com/aknarts/yew-custom-components/tree/main/examples/overview"
+keywords = ["yew", "web-components", "custom-elements", "wasm"]
+categories = ["web-programming", "wasm"]
+resolver = "2"
+
+[dependencies]
+plotly = { version = "0.12.1", features = ["wasm"] }
+console_error_panic_hook = "0.1"
+gloo-storage = "0.3"
+lazy_static = "1.4"
+serde = { version = "1.0.217", features = ["derive"] }
+serde-value = "0.7"
+serde-wasm-bindgen = "0.6.5"
+tracing = "0.1.41"
+tracing-wasm = "0.2"
+yew = { version = "0.21.0", features = ["csr"] }
+yew-custom-components = { version = "0.2.2", features = ["table", "pagination"] }
+serde_json = "1.0.138"
+yew-hooks = "0.3.3"
+yew-router = "0.18"
+web-sys = { version = "0.3.77", features = ["HtmlInputElement","Document", "Window"] }
+reqwest = { version = "0.12.12", features = ["json"] }
+cached = { version = "0.54.0", features = ["async"] }
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { version = "1.43.0", features = ["full"] }
