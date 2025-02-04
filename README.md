@@ -1,4 +1,4 @@
-[Demo](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/)
+[Demo](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/index.html)
 
 You can install the dependencies and build the web app.
 
