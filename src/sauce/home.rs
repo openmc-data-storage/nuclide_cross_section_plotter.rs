@@ -155,8 +155,14 @@ async fn get_values_by_id(id: i32) -> Result<(Vec<f64>, Vec<f64>, String), reqwe
     let output = convert_string(entry);
     console::log_1(&serde_wasm_bindgen::to_value(&"output").unwrap());
     console::log_1(&serde_wasm_bindgen::to_value(&output).unwrap());
+    console::log_1(&serde_wasm_bindgen::to_value(&"entry.library").unwrap());
+    console::log_1(&serde_wasm_bindgen::to_value(&entry.library).unwrap());
 
-    let url = format!("https://raw.githubusercontent.com/openmc-data-storage/ENDF-B-VIII.0-NNDC-json/refs/heads/main/json_files/{output}.json");
+    let url = match entry.library.as_str() {
+        "ENDFB-8.0" => format!("https://raw.githubusercontent.com/openmc-data-storage/ENDF-B-VIII.0-NNDC-json/refs/heads/main/json_files/{output}.json"),
+        "FENDL-3.2c" => format!("https://raw.githubusercontent.com/openmc-data-storage/FENDL-3.2c-json/refs/heads/main/FENDL-3.2c_json/{output}.json"),
+        _ => panic!("Unsupported library: {}", entry.library),
+    };
 
     console::log_1(&serde_wasm_bindgen::to_value(&url).unwrap());
     let downloaded_reaction_data: ReactionData = reqwest::get(url)
@@ -166,7 +172,7 @@ async fn get_values_by_id(id: i32) -> Result<(Vec<f64>, Vec<f64>, String), reqwe
         console::log_1(&serde_wasm_bindgen::to_value("downloaded data").unwrap());
         console::log_1(&serde_wasm_bindgen::to_value(&downloaded_reaction_data).unwrap());
     
-    let label = entry.element.clone() + entry.nucleons.to_string().as_str() + " " + entry.reaction.as_str(); // + " " +entry.library.as_str()  +" " + entry.temperature.as_str();
+    let label = entry.element.clone() + entry.nucleons.to_string().as_str() + " " + entry.reaction.as_str()+ " " +entry.library.as_str(); //   +" " + entry.temperature.as_str();
     Ok((downloaded_reaction_data.energy_values, downloaded_reaction_data.cross_section_values, label))
 }
 
@@ -193,10 +199,12 @@ pub fn home() -> Html {
     let nucleons_search_term = use_state(|| None::<String>);
     let reaction_search_term = use_state(|| None::<String>);
     let mt_search_term = use_state(|| None::<String>);
+    let library_search_term = use_state(|| None::<String>);
     let element_search = (*element_search_term).as_ref().cloned();
     let nucleons_search = (*nucleons_search_term).as_ref().cloned();
     let reaction_search = (*reaction_search_term).as_ref().cloned();
     let mt_search = (*mt_search_term).as_ref().cloned();
+    let library_search = (*library_search_term).as_ref().cloned();
 
     let page = use_state(|| 0usize);
     let current_page = (*page).clone();
@@ -212,6 +220,7 @@ pub fn home() -> Html {
         ColumnBuilder::new("reaction").orderable(true).short_name("Reaction").data_property("reaction").header_class("user-select-none").build(),
         // ColumnBuilder::new("library").orderable(true).short_name("Library").data_property("library").header_class("user-select-none").build(),
         ColumnBuilder::new("mt").orderable(true).short_name("MT").data_property("mt").header_class("user-select-none").build(),
+        ColumnBuilder::new("library").orderable(true).short_name("Library").data_property("library").header_class("user-select-none").build(),
         // ColumnBuilder::new("temperature").orderable(true).short_name("Temperature").data_property("temperature").header_class("user-select-none").build(),
     ];
 
@@ -239,6 +248,7 @@ pub fn home() -> Html {
             let nucleons = &entry.nucleons;
             let reaction = &entry.reaction;
             let mt = &entry.mt;
+            let library = &entry.library;
 
             let element_match = match element_search {
                 Some(ref term) => element.to_lowercase().contains(&term.to_lowercase()),
@@ -256,17 +266,21 @@ pub fn home() -> Html {
                 Some(ref term) => mt.to_string().contains(&*term),
                 None => true,
             };
+            let library_match = match library_search {
+                Some(ref term) => library.to_string().contains(&*term),
+                None => true,
+            };
 
-            element_match && nucleons_match && reaction_match && mt_match
+            element_match && nucleons_match && reaction_match && mt_match && library_match
         })
         .map(|(index, entry)| TableLine {
             original_index: index,
             id: entry.id,
             element: entry.element.clone(),
             nucleons: entry.nucleons.clone(),
-            library: entry.library.clone(),
             reaction: entry.reaction.clone(),
             mt: entry.mt.clone(),
+            library: entry.library.clone(),
             temperature: entry.temperature.clone(),
             checked: selected_indexes.current().contains(&index),
             sum_callback: callback_sum.clone(),
@@ -335,6 +349,18 @@ pub fn home() -> Html {
                 mt_search_term.set(None);
             } else {
                 mt_search_term.set(Some(input.value()));
+            }
+        })
+    };
+
+    let oninput_library_search = {
+        let library_search_term = library_search_term.clone();
+        Callback::from(move |e: InputEvent| {
+            let input: HtmlInputElement = e.target_unchecked_into();
+            if input.value().is_empty() {
+                library_search_term.set(None);
+            } else {
+                library_search_term.set(Some(input.value()));
             }
         })
     };
@@ -412,6 +438,18 @@ pub fn home() -> Html {
                         oninput={oninput_mt_search} 
                     />
                 </div>
+                <div class="flex-grow-1 p-2 input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input 
+                        class="form-control" 
+                        type="text" 
+                        id="library-search" 
+                        placeholder="Search by library" 
+                        oninput={oninput_library_search} 
+                    />
+                </div>
             </div>
 
             
@@ -454,9 +492,9 @@ struct TableLine {
     pub id: i32,
     pub element: String,
     pub nucleons: i32,
-    pub library: String,
     pub reaction: String,
     pub mt: i32,
+    pub library: String,
     pub temperature: String,
     #[serde(skip_serializing)]
     pub sum_callback: Callback<usize>,
