@@ -267,7 +267,7 @@ pub fn home() -> Html {
                 None => true,
             };
             let library_match = match library_search {
-                Some(ref term) => library.to_string().contains(&*term),
+                Some(ref term) => library.to_lowercase().contains(&term.to_lowercase()),
                 None => true,
             };
 

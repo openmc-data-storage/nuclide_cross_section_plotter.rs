@@ -36,7 +36,7 @@ for url in urls:
         new_entry['library'] = entry['Library']
         new_entry['reaction'] = f'({entry["Incident particle"][0]},{entry["Reaction products"]})'
         new_entry['MT'] = entry['MT reaction number']
-        new_entry['temperature'] = entry['Temperature(K)']+"K"
+        new_entry['temperature'] = entry['Temperature(K)']
         
 
         compact_table.append(new_entry)
