@@ -185,7 +185,7 @@ fn convert_string(entry: &Entry) -> String {
     let particle:char = 'n';  // entry.particle.clone();
     let mt = entry.mt.clone();
     let temperature = entry.temperature.clone();
-    let output = format!("{}_{}_{}_{}_{}_{}", element, nucleons, library, particle, mt, temperature);
+    let output = format!("{}_{}_{}_{}_{}_{}K", element, nucleons, library, particle, mt, temperature);
     output
 }
 
@@ -459,7 +459,7 @@ pub fn home() -> Html {
                     options={options.clone()} 
                     limit={Some(limit)} 
                     page={current_page} 
-                    search={element_search.clone()} 
+                    // search={element_search.clone()} 
                     classes={classes!("table", "table-hover")} 
                     columns={columns.clone()} 
                     data={paginated_data} 
@@ -502,7 +502,7 @@ struct TableLine {
 
 impl PartialEq<Self> for TableLine {
     fn eq(&self, other: &Self) -> bool {
-        self.element == other.element && self.nucleons == other.nucleons && self.checked == other.checked
+        self.element == other.element && self.nucleons == other.nucleons && self.library == other.library && self.reaction == other.reaction  && self.mt == other.mt && self.checked == other.checked
     }
 }
 
