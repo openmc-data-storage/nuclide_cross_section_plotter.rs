@@ -27,13 +27,13 @@ fn load_data_from_str(json_str: &str) -> Result<Vec<Entry>, Box<dyn std::error::
     let json_data: Vec<serde_json::Value> = serde_json::from_str(json_str)?;
     let mut data = Vec::new();
     for item in json_data {
-        let id: i32  = item["id"].as_i64().unwrap() as i32;
-        let element = item["element"].as_str().unwrap().to_string();
-        let nucleons: i32 = item["nucleons"].as_i64().unwrap() as i32;
-        let library = item["library"].as_str().unwrap().to_string();
-        let reaction = item["reaction"].as_str().unwrap().to_string();
-        let mt: i32 = item["MT"].as_i64().unwrap() as i32;
-        let temperature = item["temperature"].as_str().unwrap().to_string();
+        let id: i32  = item["i"].as_i64().unwrap() as i32;
+        let element = item["e"].as_str().unwrap().to_string();
+        let nucleons: i32 = item["n"].as_i64().unwrap() as i32;
+        let library = item["l"].as_str().unwrap().to_string();
+        let reaction = item["r"].as_str().unwrap().to_string();
+        let mt: i32 = item["m"].as_i64().unwrap() as i32;
+        let temperature = item["t"].as_str().unwrap().to_string();
         data.push(Entry {
             id,
             element,

@@ -30,13 +30,13 @@ for url in urls:
     for entry in data:
         
         new_entry = {}
-        new_entry['id'] =i
-        new_entry['element'] = entry['Atomic symbol']
-        new_entry['nucleons'] = entry['Mass number']
-        new_entry['library'] = entry['Library']
-        new_entry['reaction'] = f'({entry["Incident particle"][0]},{entry["Reaction products"]})'
-        new_entry['MT'] = entry['MT reaction number']
-        new_entry['temperature'] = entry['Temperature(K)']
+        new_entry['i'] =i  # id
+        new_entry['e'] = entry['Atomic symbol']
+        new_entry['n'] = entry['Mass number']
+        new_entry['l'] = entry['Library']
+        new_entry['r'] = f'({entry["Incident particle"][0]},{entry["Reaction products"]})'
+        new_entry['m'] = entry['MT reaction number']
+        new_entry['t'] = entry['Temperature(K)']
         
 
         compact_table.append(new_entry)
@@ -44,7 +44,7 @@ for url in urls:
         i=i+1
 
 with open('src/types/table_data.json', 'w') as outfile:
-    json.dump(compact_table, outfile, indent=4)
+    json.dump(compact_table, outfile)
 
 # index_filename
 # [
