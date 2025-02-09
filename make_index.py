@@ -1,7 +1,7 @@
 import requests
 import json
 import os
-
+import csv
 
 # reads in the JSON index files and makes a more compact table of the data
 
@@ -14,6 +14,7 @@ urls=[
 ]
 i=0
 for url in urls:
+    print(url)
     local_file_path= url.split('/')[-1]
     if os.path.exists(local_file_path):
         with open(local_file_path, 'r') as file:
@@ -28,15 +29,17 @@ for url in urls:
 
 
     for entry in data:
-        
+        # print(entry.keys())
+        # input()
         new_entry = {}
-        new_entry['i'] =i  # id
-        new_entry['e'] = entry['Atomic symbol']
-        new_entry['n'] = entry['Mass number']
-        new_entry['l'] = entry['Library']
-        new_entry['r'] = f'({entry["Incident particle"][0]},{entry["Reaction products"]})'
-        new_entry['m'] = entry['MT reaction number']
-        new_entry['t'] = entry['Temperature(K)']
+        new_entry['id'] =i  # id
+        new_entry['element'] = entry['Atomic symbol']
+        new_entry['nucleons'] = entry['Mass number']
+        new_entry['library'] = entry['Library']
+        # new_entry['reaction'] = f'({entry["Incident particle"][0]},{entry["Reaction products"]})'
+        new_entry['incident_particle'] = entry["Incident particle"][0]
+        new_entry['mt'] = entry['MT reaction number']
+        new_entry['temperature'] = entry['Temperature(K)']
         
 
         compact_table.append(new_entry)
@@ -45,6 +48,16 @@ for url in urls:
 
 with open('src/types/table_data.json', 'w') as outfile:
     json.dump(compact_table, outfile)
+    
+# Write to CSV file
+csv_file_path = 'src/types/table_data.csv'
+csv_columns = ['id', 'element', 'nucleons', 'library', 'incident_particle', 'mt', 'temperature']
+
+with open(csv_file_path, 'w', newline='') as csvfile:
+    writer = csv.DictWriter(csvfile, fieldnames=csv_columns)
+    writer.writeheader()
+    for data in compact_table:
+        writer.writerow(data)
 
 # index_filename
 # [
