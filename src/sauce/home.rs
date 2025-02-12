@@ -479,6 +479,7 @@ pub fn home() -> Html {
                 <div class="flex-grow-1" style="width: 100%;">
                     <App selected_indexes={(*selected_indexes.current()).clone()} />
                 </div>
+                <h5><a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/">{"Help improve this website by contributing to the repository,"}</a></h5>
                 </div>
                 </div>
         </>
