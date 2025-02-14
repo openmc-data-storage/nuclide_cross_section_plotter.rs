@@ -33,6 +33,7 @@ pub struct XsCache {
 #[derive(Properties, PartialEq)]
 pub struct PlotProps {
     pub selected_indexes: HashSet<usize>,
+    pub clear_plot_callback: Callback<MouseEvent>,
 }
 
 #[function_component(App)]
@@ -107,18 +108,28 @@ pub fn plot_component(props: &PlotProps) -> Html {
     html! {
         <div style="text-align: center;">
         <div class="d-flex mb-2">
-            <button 
+
+            <button
                 onclick={onclick_toggle_y_log}
                 class="btn btn-primary me-2"
             >
-                {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
+            {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
             </button>
-            <button 
+
+            <button
                 onclick={onclick_toggle_x_log}
-                class="btn btn-primary"
+                class="btn btn-primary me-2"
             >
-                {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
+            {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
             </button>
+
+            <button
+                onclick={props.clear_plot_callback.clone()} // <-- Add this button
+                class="btn btn-primary me-2"
+            >
+            { "Clear Plot" }
+            </button>
+
         </div>
         <div id="plot-div"></div>
     </div>
@@ -229,6 +240,13 @@ pub fn home() -> Html {
         ascending_class: Some("fa-sort-up".to_string()),
         descending_class: Some("fa-sort-down".to_string()),
         orderable_classes: vec!["mx-1".to_string(), "fa-solid".to_string()],
+    };
+
+    let clear_plot_callback = {
+        let selected_indexes = selected_indexes.clone();
+        Callback::from(move |_: MouseEvent| {
+            selected_indexes.clear();
+        })
     };
 
     let callback_sum = {
@@ -461,7 +479,7 @@ pub fn home() -> Html {
                     page={current_page} 
                     // search={element_search.clone()} 
                     classes={classes!("table", "table-hover")} 
-                    columns={columns.clone()} 
+                    columns={columns.clone()}
                     data={paginated_data} 
                     orderable={true}
                 />
@@ -477,7 +495,10 @@ pub fn home() -> Html {
                 //     on_page={Some(handle_page)}
                 // />
                 <div class="flex-grow-1" style="width: 100%;">
-                    <App selected_indexes={(*selected_indexes.current()).clone()} />
+                    <App
+                        selected_indexes={(*selected_indexes.current()).clone()}
+                        clear_plot_callback={clear_plot_callback}
+                    />
                 </div>
                 <h5><a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/">{"Help improve this website by contributing to the repository,"}</a></h5>
                 </div>
