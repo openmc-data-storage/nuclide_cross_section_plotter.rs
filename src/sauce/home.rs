@@ -53,16 +53,35 @@ pub fn plot_component(props: &PlotProps) -> Html {
             let id = "plot-div";
             let mut plot = Plot::new();
 
+            let mut heat_or_damage_plotted: bool = false;
+            let mut cross_section_plotted: bool = false;
+
             for (i, (energy, cross_section)) in cache.energy_values.iter().zip(&cache.cross_section_values).enumerate() {
                 if cache.checkbox_selected[i] {
                     let trace = Scatter::new(energy.clone(), cross_section.clone())
                         .name(&format!("{}", cache.labels[i]));
                     plot.add_trace(trace);
+                    if cache.labels[i].contains("heat") || cache.labels[i].contains("damage") {
+                        heat_or_damage_plotted = true;
+                    }
+                    if !cache.labels[i].contains("heat") && !cache.labels[i].contains("damage") {
+                        cross_section_plotted = true;
+                    }
                 }
             }
 
+            let x_axis_title = if cross_section_plotted && heat_or_damage_plotted {
+                "Microscopic Cross Section [barns], Heating Cross Section [eV-barn]"
+            } else if cross_section_plotted {
+                "Microscopic Cross Section [barns]"
+            } else if heat_or_damage_plotted {
+                "Heating Cross Section [eV-barn]"
+            } else {
+                "" // no data plotted
+            };
+
             let y_axis = plotly::layout::Axis::new()
-                .title("Cross section [barns]")
+                .title(x_axis_title)
                 // .show_line(true)
                 .zero_line(true)
                 // .range(0)  not sure how to set lower value
@@ -401,7 +420,9 @@ pub fn home() -> Html {
 
     html!(
         <>
-            <h1>{"Nuclide microscopic cross section plotter"}</h1>
+            <h1>{"Nuclide Microscopic Cross Section Plotter"}</h1>
+
+            <h5>{"A searchable database of neutron cross sections with interactive plotting created by Jon Shimwell."}</h5>       
 
 
             <div class="d-flex mb-2">
@@ -483,7 +504,7 @@ pub fn home() -> Html {
                     data={paginated_data} 
                     orderable={true}
                 />
-                <h5>{"Selected"} <span class="badge text-bg-secondary">{sum}</span>{" from 41337 available database entries."}</h5>
+                <h5>{sum}{" / 41337"}</h5>
                 </div>
                 <div class="flex-grow-1 p-2 input-group">
 
@@ -500,7 +521,11 @@ pub fn home() -> Html {
                         clear_plot_callback={clear_plot_callback}
                     />
                 </div>
-                <h5><a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/">{"Help improve this website by contributing to the repository,"}</a></h5>
+                // <h5>{"Created by Jon Shimwell, source code available "}</h5>
+                //     <a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/" target="_blank">
+                //         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/240px-Octicons-mark-github.svg.png" alt="GitHub" style="width: 30px; height: 30px;"/>
+                //     </a>
+                
                 </div>
                 </div>
         </>
