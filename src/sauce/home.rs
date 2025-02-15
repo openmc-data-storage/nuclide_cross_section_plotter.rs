@@ -504,7 +504,7 @@ pub fn home() -> Html {
                     data={paginated_data} 
                     orderable={true}
                 />
-                <h5>{"Selected"} <span class="badge text-bg-secondary">{sum}</span>{" from 41337 available database entries."}</h5>
+                <h5>{sum}{" / 41337"}</h5>
                 </div>
                 <div class="flex-grow-1 p-2 input-group">
 
