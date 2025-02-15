@@ -420,7 +420,9 @@ pub fn home() -> Html {
 
     html!(
         <>
-            <h1>{"Nuclide microscopic cross section plotter"}</h1>
+            <h1>{"Nuclide Microscopic Cross Section Plotter"}</h1>
+
+            <h5>{"A searchable database of neutron cross sections with interactive plotting created by Jon Shimwell."}</h5>       
 
 
             <div class="d-flex mb-2">
@@ -519,7 +521,11 @@ pub fn home() -> Html {
                         clear_plot_callback={clear_plot_callback}
                     />
                 </div>
-                <h5><a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/">{"Help improve this website by contributing to the repository,"}</a></h5>
+                // <h5>{"Created by Jon Shimwell, source code available "}</h5>
+                //     <a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/" target="_blank">
+                //         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/240px-Octicons-mark-github.svg.png" alt="GitHub" style="width: 30px; height: 30px;"/>
+                //     </a>
+                
                 </div>
                 </div>
         </>
