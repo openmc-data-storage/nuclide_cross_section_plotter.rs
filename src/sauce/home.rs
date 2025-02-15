@@ -53,16 +53,35 @@ pub fn plot_component(props: &PlotProps) -> Html {
             let id = "plot-div";
             let mut plot = Plot::new();
 
+            let mut heat_or_damage_plotted: bool = false;
+            let mut cross_section_plotted: bool = false;
+
             for (i, (energy, cross_section)) in cache.energy_values.iter().zip(&cache.cross_section_values).enumerate() {
                 if cache.checkbox_selected[i] {
                     let trace = Scatter::new(energy.clone(), cross_section.clone())
                         .name(&format!("{}", cache.labels[i]));
                     plot.add_trace(trace);
+                    if cache.labels[i].contains("heat") || cache.labels[i].contains("damage") {
+                        heat_or_damage_plotted = true;
+                    }
+                    if !cache.labels[i].contains("heat") && !cache.labels[i].contains("damage") {
+                        cross_section_plotted = true;
+                    }
                 }
             }
 
+            let x_axis_title = if cross_section_plotted && heat_or_damage_plotted {
+                "Microscopic Cross Section [barns], Heating Cross Section [eV-barn]"
+            } else if cross_section_plotted {
+                "Microscopic Cross Section [barns]"
+            } else if heat_or_damage_plotted {
+                "Heating Cross Section [eV-barn]"
+            } else {
+                "" // no data plotted
+            };
+
             let y_axis = plotly::layout::Axis::new()
-                .title("Cross section [barns]")
+                .title(x_axis_title)
                 // .show_line(true)
                 .zero_line(true)
                 // .range(0)  not sure how to set lower value
