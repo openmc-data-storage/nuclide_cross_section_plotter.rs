@@ -14,6 +14,9 @@ use plotly::layout::{AxisType};
 use yew::prelude::*;
 use serde::Deserialize;
 
+use web_sys::{Element, HtmlElement}; // Import Element and HtmlElement
+// use wasm_bindgen::JsCast; // Import JsCast for dyn_into
+use web_sys::wasm_bindgen::JsCast;
 #[derive(Debug, Serialize, Deserialize)]
 struct ReactionData {
     #[serde(rename = "energy")]
@@ -124,6 +127,28 @@ pub fn plot_component(props: &PlotProps) -> Html {
         })
     };
 
+
+    use web_sys::HtmlElement;
+    let fullscreen_onclick = Callback::from(move |_| {
+        if let Some(plot_div) = web_sys::window()
+            .and_then(|win| win.document())
+            .and_then(|doc| doc.get_element_by_id("plot-div"))
+        {
+            let _ = plot_div.request_fullscreen();
+            let _ = plot_div.set_attribute("style", "width: 100%; height: 100%;");
+            
+            // Handle body styles
+            if let Some(body) = web_sys::window()
+                .and_then(|win| win.document())
+                .and_then(|doc| doc.body())
+            {
+                let _ = body.set_attribute("style", "overflow: hidden");
+            }
+        } else {
+            console::error_1(&"Plot div not found".into());
+        }
+    });
+
     html! {
         <div style="text-align: center;">
         <div class="d-flex mb-2">
@@ -148,9 +173,16 @@ pub fn plot_component(props: &PlotProps) -> Html {
             >
             { "Clear Plot" }
             </button>
+            <button 
+                onclick={fullscreen_onclick}
+                class="btn btn-primary me-2"
+                disabled={selected_indexes.is_empty()}
+            >
+                <i class="fas fa-expand"></i> {" Fullscreen"}
+            </button>
 
         </div>
-        <div id="plot-div"></div>
+        <div id="plot-div" class="plot-container"></div>
     </div>
     }
 }

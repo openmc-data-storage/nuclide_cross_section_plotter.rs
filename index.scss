@@ -33,3 +33,13 @@ h1 + .subtitle {
   display: block;
   margin-top: -1em;
 }
+
+.plot-container {
+  width: 100%;
+  height: 600px; /* Default height */
+}
+
+:fullscreen .plot-container {
+  width: 100%;
+  height: 100%;
+}
