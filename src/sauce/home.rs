@@ -50,8 +50,6 @@ pub fn plot_component(props: &PlotProps) -> Html {
         let selected_indexes = selected_indexes.clone();
         let is_y_log = is_y_log.clone();
         let is_x_log = is_x_log.clone();
-        let is_fullscreen = is_fullscreen.clone();
-
 
         async move {
             let cache = generate_cache(&selected_indexes).await;
@@ -523,17 +521,17 @@ pub fn home() -> Html {
                 
             <div class="d-flex mb-2">
                 <div class="flex-grow-1 p-2 input-group me-2">
-                <Table<TableLine> 
-                    options={options.clone()} 
-                    limit={Some(limit)} 
-                    page={current_page} 
-                    // search={element_search.clone()} 
-                    classes={classes!("table", "table-hover")} 
-                    columns={columns.clone()}
-                    data={paginated_data} 
-                    orderable={true}
-                />
-                <h5>{sum}{" / 41337"}</h5>
+                    <Table<TableLine> 
+                        options={options.clone()} 
+                        limit={Some(limit)} 
+                        page={current_page} 
+                        // search={element_search.clone()} 
+                        classes={classes!("table", "table-hover")} 
+                        columns={columns.clone()}
+                        data={paginated_data} 
+                        orderable={true}
+                    />
+                    <h5>{sum}{" / 41337"}</h5>
                 </div>
                 <div class="flex-grow-1 p-2 input-group">
 
@@ -544,22 +542,17 @@ pub fn home() -> Html {
                 //     options={pagination_options} 
                 //     on_page={Some(handle_page)}
                 // />
-                <div class="flex-grow-1 p-2 input-group me-2">
-                    <PlotComponent
-                        selected_indexes={(*selected_indexes.current()).clone()}
-                        is_y_log={is_y_log.clone()}
-                        is_x_log={is_x_log.clone()}
-                        clear_plot_callback={clear_plot_callback.clone()}
-                        is_fullscreen={is_fullscreen.clone()}
-                    />
+                    <div class="flex-grow-1 p-2 input-group me-2">
+                        <PlotComponent
+                            selected_indexes={(*selected_indexes.current()).clone()}
+                            is_y_log={is_y_log.clone()}
+                            is_x_log={is_x_log.clone()}
+                            clear_plot_callback={clear_plot_callback.clone()}
+                            is_fullscreen={is_fullscreen.clone()}
+                        />
+                    </div>
                 </div>
-                // <h5>{"Created by Jon Shimwell, source code available "}</h5>
-                //     <a href="https://github.com/openmc-data-storage/nuclide_cross_section_plotter.rs/" target="_blank">
-                //         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Octicons-mark-github.svg/240px-Octicons-mark-github.svg.png" alt="GitHub" style="width: 30px; height: 30px;"/>
-                //     </a>
-                
-                </div>
-                </div>
+            </div>
         </>
     )
 }
