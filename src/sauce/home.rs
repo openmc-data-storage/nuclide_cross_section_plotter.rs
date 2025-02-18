@@ -116,13 +116,6 @@ pub fn plot_component(props: &PlotProps) -> Html {
         <div style="text-align: center;">
         <div class="d-flex mb-2">
 
-            <button
-                onclick={props.clear_plot_callback.clone()} // <-- Add this button
-                class="btn btn-primary me-2"
-            >
-            { "Clear Plot" }
-            </button>
-
         </div>
         <div id="plot-div"></div>
     </div>
@@ -482,6 +475,14 @@ pub fn home() -> Html {
                 </div>
             </div>
 
+
+            <button
+            onclick={clear_plot_callback.clone()}
+            class="btn btn-primary me-2"
+            >
+            { "Clear Plot" }
+            </button>
+
             <button
             onclick={onclick_toggle_x_log}
             class="btn btn-primary me-2"
@@ -524,7 +525,7 @@ pub fn home() -> Html {
                         selected_indexes={(*selected_indexes.current()).clone()}
                         is_y_log={is_y_log.clone()}
                         is_x_log={is_x_log.clone()}
-                        clear_plot_callback={clear_plot_callback}
+                        clear_plot_callback={clear_plot_callback.clone()}
                     />
                 </div>
                 // <h5>{"Created by Jon Shimwell, source code available "}</h5>
