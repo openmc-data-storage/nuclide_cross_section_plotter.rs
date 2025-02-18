@@ -36,6 +36,7 @@ pub struct PlotProps {
     pub is_y_log: UseStateHandle<bool>,
     pub is_x_log: UseStateHandle<bool>,
     pub clear_plot_callback: Callback<MouseEvent>,
+    pub is_fullscreen: UseStateHandle<bool>,
 }
 
 #[function_component(PlotComponent)]
@@ -43,11 +44,14 @@ pub fn plot_component(props: &PlotProps) -> Html {
     let selected_indexes = &props.selected_indexes;
     let is_y_log = props.is_y_log.clone();
     let is_x_log = props.is_x_log.clone();
+    let is_fullscreen = props.is_fullscreen.clone();
 
     let p = use_async::<_, _, ()>({
         let selected_indexes = selected_indexes.clone();
         let is_y_log = is_y_log.clone();
         let is_x_log = is_x_log.clone();
+        let is_fullscreen = is_fullscreen.clone();
+
 
         async move {
             let cache = generate_cache(&selected_indexes).await;
@@ -112,8 +116,16 @@ pub fn plot_component(props: &PlotProps) -> Html {
         p.run();
     });
 
+
+    // Style classes based on fullscreen state
+    let plot_classes = if *is_fullscreen {
+        "position-fixed top 0 left-0 w-100 h-100 z-50 bg-white"
+    } else {
+        "w-100 h-100"
+    };
+
     html! {
-        <div id="plot-div"></div>
+        <div id="plot-div" class={classes!(plot_classes)} style="min-height: 400px;"></div>
     }
 }
 
@@ -206,6 +218,7 @@ pub fn home() -> Html {
 
     let is_y_log = use_state(|| true);
     let is_x_log = use_state(|| true);
+    let is_fullscreen = use_state(|| false);
 
     let onclick_toggle_y_log = {
         let is_y_log = is_y_log.clone();
@@ -381,6 +394,14 @@ pub fn home() -> Html {
         })
     };
 
+    // Toggle fullscreen callback
+    let onclick_toggle_fullscreen = {
+        let is_fullscreen = is_fullscreen.clone();
+        Callback::from(move |_| {
+            is_fullscreen.set(!*is_fullscreen);
+        })
+    };
+
     // let pagination_options = yew_custom_components::pagination::Options::default()
     //     .show_prev_next(true)
     //     .show_first_last(true)
@@ -491,6 +512,13 @@ pub fn home() -> Html {
                 >
                     {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
                 </button>
+
+                <button 
+                onclick={onclick_toggle_fullscreen}
+                class="btn btn-secondary mb-2"
+                >
+                    {if *is_fullscreen { "Exit Fullscreen" } else { "Enlarge Plot" }}
+                </button>
             </div>
                 
             <div class="d-flex mb-2">
@@ -522,6 +550,7 @@ pub fn home() -> Html {
                         is_y_log={is_y_log.clone()}
                         is_x_log={is_x_log.clone()}
                         clear_plot_callback={clear_plot_callback.clone()}
+                        is_fullscreen={is_fullscreen.clone()}
                     />
                 </div>
                 // <h5>{"Created by Jon Shimwell, source code available "}</h5>
