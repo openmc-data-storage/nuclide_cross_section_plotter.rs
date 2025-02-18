@@ -475,27 +475,28 @@ pub fn home() -> Html {
                 </div>
             </div>
 
+            <div class="d-flex mb-2 justify-content-center">
+                <button
+                onclick={clear_plot_callback.clone()}
+                class="btn btn-primary me-2"
+                >
+                { "Clear Plot" }
+                </button>
 
-            <button
-            onclick={clear_plot_callback.clone()}
-            class="btn btn-primary me-2"
-            >
-            { "Clear Plot" }
-            </button>
+                <button
+                onclick={onclick_toggle_x_log}
+                class="btn btn-primary me-2"
+                >
+                    {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
+                </button>
 
-            <button
-            onclick={onclick_toggle_x_log}
-            class="btn btn-primary me-2"
-            >
-                {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
-            </button>
-
-            <button
-            onclick={onclick_toggle_y_log}
-            class="btn btn-primary me-2"
-            >
-                {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
-            </button>
+                <button
+                onclick={onclick_toggle_y_log}
+                class="btn btn-primary me-2"
+                >
+                    {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
+                </button>
+            </div>
                 
             <div class="d-flex mb-2">
                 <div class="flex-grow-1 p-2 input-group me-2">
