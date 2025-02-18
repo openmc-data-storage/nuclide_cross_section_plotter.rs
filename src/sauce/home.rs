@@ -113,12 +113,7 @@ pub fn plot_component(props: &PlotProps) -> Html {
     });
 
     html! {
-        <div style="text-align: center;">
-        <div class="d-flex mb-2">
-
-        </div>
         <div id="plot-div"></div>
-    </div>
     }
 }
 
@@ -521,7 +516,7 @@ pub fn home() -> Html {
                 //     options={pagination_options} 
                 //     on_page={Some(handle_page)}
                 // />
-                <div class="flex-grow-1" style="width: 100%;">
+                <div class="flex-grow-1 p-2 input-group me-2">
                     <PlotComponent
                         selected_indexes={(*selected_indexes.current()).clone()}
                         is_y_log={is_y_log.clone()}
