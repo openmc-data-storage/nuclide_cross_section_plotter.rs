@@ -115,15 +115,20 @@ pub fn plot_component(props: &PlotProps) -> Html {
     });
 
 
-    // Style classes based on fullscreen state
-    let plot_classes = if *is_fullscreen {
-        "position-fixed top 0 left-0 w-100 h-100 z-50 bg-white"
+    let plot_classes = if *props.is_fullscreen {
+        "position-fixed top-0 start-0 w-100 h-100 bg-white z-50"
     } else {
-        "w-100 h-100"
+        "w-100 h-auto"
+    };
+
+    let container_style = if *props.is_fullscreen {
+        "position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; z-index: 9999;"
+    } else {
+        "min-height: 400px;"
     };
 
     html! {
-        <div id="plot-div" class={classes!(plot_classes)} style="min-height: 400px;"></div>
+        <div id="plot-div" class={classes!(plot_classes)} style={container_style}></div>
     }
 }
 
@@ -416,7 +421,7 @@ pub fn home() -> Html {
     //     })
     // };
 
-    html!(
+    html!{
         <>
             <h1>{"Nuclide Microscopic Cross Section Plotter"}</h1>
 
@@ -502,47 +507,46 @@ pub fn home() -> Html {
                 class="btn btn-primary me-2"
                 >
                     {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
-                </button>
+                    </button>
 
-                <button
-                onclick={onclick_toggle_y_log}
-                class="btn btn-primary me-2"
-                >
-                    {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
-                </button>
-
-                <button 
-                onclick={onclick_toggle_fullscreen}
-                class="btn btn-secondary mb-2"
-                >
-                    {if *is_fullscreen { "Exit Fullscreen" } else { "Enlarge Plot" }}
-                </button>
-            </div>
-                
-            <div class="d-flex mb-2">
-                <div class="flex-grow-1 p-2 input-group me-2">
-                    <Table<TableLine> 
-                        options={options.clone()} 
-                        limit={Some(limit)} 
-                        page={current_page} 
-                        // search={element_search.clone()} 
-                        classes={classes!("table", "table-hover")} 
-                        columns={columns.clone()}
-                        data={paginated_data} 
-                        orderable={true}
-                    />
-                    <h5>{sum}{" / 41337"}</h5>
+                    <button
+                    onclick={onclick_toggle_y_log}
+                    class="btn btn-primary me-2"
+                    >
+                        {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
+                    </button>
+    
+                    <button 
+                    onclick={onclick_toggle_fullscreen}
+                    class="btn btn-secondary mb-2"
+                    >
+                        {if *is_fullscreen { "Exit Fullscreen" } else { "Enlarge Plot" }}
+                    </button>
                 </div>
-                <div class="flex-grow-1 p-2 input-group">
-
-                // <Pagination 
-                //     total={total}
-                //     limit={limit} 
-                //     max_pages={6} 
-                //     options={pagination_options} 
-                //     on_page={Some(handle_page)}
-                // />
-                    <div class="flex-grow-1 p-2 input-group me-2">
+                    
+                <div class="d-flex mb-2">
+                    // Only show the table section when not in fullscreen
+                    {if !*is_fullscreen {
+                        html! {
+                            <div class="flex-grow-1 p-2 input-group me-2">
+                                <Table<TableLine> 
+                                    options={options.clone()} 
+                                    limit={Some(limit)} 
+                                    page={current_page} 
+                                    classes={classes!("table", "table-hover")} 
+                                    columns={columns.clone()}
+                                    data={paginated_data} 
+                                    orderable={true}
+                                />
+                                <h5>{sum}{" / 41337"}</h5>
+                            </div>
+                        }
+                    } else {
+                        html! {}
+                    }}
+                    
+                    // The plot container
+                    <div class={if *is_fullscreen { "w-100" } else { "flex-grow-1 p-2 input-group" }}>
                         <PlotComponent
                             selected_indexes={(*selected_indexes.current()).clone()}
                             is_y_log={is_y_log.clone()}
@@ -552,10 +556,8 @@ pub fn home() -> Html {
                         />
                     </div>
                 </div>
-            </div>
-        </>
-    )
-}
+            </>
+        }}
 
 #[derive(Clone, Serialize, Debug, Default)]
 struct TableLine {
