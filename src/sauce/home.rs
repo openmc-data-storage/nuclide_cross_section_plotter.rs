@@ -33,14 +33,16 @@ pub struct XsCache {
 #[derive(Properties, PartialEq)]
 pub struct PlotProps {
     pub selected_indexes: HashSet<usize>,
+    pub is_y_log: UseStateHandle<bool>,
+    pub is_x_log: UseStateHandle<bool>,
     pub clear_plot_callback: Callback<MouseEvent>,
 }
 
-#[function_component(App)]
+#[function_component(PlotComponent)]
 pub fn plot_component(props: &PlotProps) -> Html {
     let selected_indexes = &props.selected_indexes;
-    let is_y_log = use_state(|| true);
-    let is_x_log = use_state(|| true);
+    let is_y_log = props.is_y_log.clone();
+    let is_x_log = props.is_x_log.clone();
 
     let p = use_async::<_, _, ()>({
         let selected_indexes = selected_indexes.clone();
@@ -110,44 +112,9 @@ pub fn plot_component(props: &PlotProps) -> Html {
         p.run();
     });
 
-    let onclick_toggle_y_log = {
-        let is_y_log = is_y_log.clone();
-        Callback::from(move |_| {
-            is_y_log.set(!*is_y_log);
-        })
-    };
-
-    let onclick_toggle_x_log = {
-        let is_x_log = is_x_log.clone();
-        Callback::from(move |_| {
-            is_x_log.set(!*is_x_log);
-        })
-    };
-
     html! {
         <div style="text-align: center;">
         <div class="d-flex mb-2">
-
-            <button
-                onclick={onclick_toggle_y_log}
-                class="btn btn-primary me-2"
-            >
-            {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
-            </button>
-
-            <button
-                onclick={onclick_toggle_x_log}
-                class="btn btn-primary me-2"
-            >
-            {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
-            </button>
-
-            <button
-                onclick={props.clear_plot_callback.clone()} // <-- Add this button
-                class="btn btn-primary me-2"
-            >
-            { "Clear Plot" }
-            </button>
 
         </div>
         <div id="plot-div"></div>
@@ -242,6 +209,23 @@ pub fn home() -> Html {
     let selected_indexes = use_set(HashSet::<usize>::new());
     let sum = selected_indexes.current().len();
 
+    let is_y_log = use_state(|| true);
+    let is_x_log = use_state(|| true);
+
+    let onclick_toggle_y_log = {
+        let is_y_log = is_y_log.clone();
+        Callback::from(move |_| {
+            is_y_log.set(!*is_y_log);
+        })
+    };
+
+    let onclick_toggle_x_log = {
+        let is_x_log = is_x_log.clone();
+        Callback::from(move |_| {
+            is_x_log.set(!*is_x_log);
+        })
+    };
+    
     let columns = vec![
         ColumnBuilder::new("select").orderable(true).short_name("Select").data_property("select").header_class("user-select-none").build(),
         // ColumnBuilder::new("id").orderable(true).short_name("ID").data_property("id").header_class("user-select-none").build(),
@@ -491,7 +475,29 @@ pub fn home() -> Html {
                 </div>
             </div>
 
-            
+            <div class="d-flex mb-2 justify-content-center">
+                <button
+                onclick={clear_plot_callback.clone()}
+                class="btn btn-primary me-2"
+                >
+                { "Clear Plot" }
+                </button>
+
+                <button
+                onclick={onclick_toggle_x_log}
+                class="btn btn-primary me-2"
+                >
+                    {if *is_x_log { "Switch X to Linear Scale" } else { "Switch X to Log Scale" }}
+                </button>
+
+                <button
+                onclick={onclick_toggle_y_log}
+                class="btn btn-primary me-2"
+                >
+                    {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
+                </button>
+            </div>
+                
             <div class="d-flex mb-2">
                 <div class="flex-grow-1 p-2 input-group me-2">
                 <Table<TableLine> 
@@ -516,9 +522,11 @@ pub fn home() -> Html {
                 //     on_page={Some(handle_page)}
                 // />
                 <div class="flex-grow-1" style="width: 100%;">
-                    <App
+                    <PlotComponent
                         selected_indexes={(*selected_indexes.current()).clone()}
-                        clear_plot_callback={clear_plot_callback}
+                        is_y_log={is_y_log.clone()}
+                        is_x_log={is_x_log.clone()}
+                        clear_plot_callback={clear_plot_callback.clone()}
                     />
                 </div>
                 // <h5>{"Created by Jon Shimwell, source code available "}</h5>
