@@ -196,7 +196,7 @@ async fn download_xs_cache(selected_indexes: HashSet<usize>) {
     let json_data = serde_json::to_string_pretty(&cache).unwrap();
 
     // Create a Blob from the JSON data
-    let mut blob_options = BlobPropertyBag::new();
+    let blob_options = BlobPropertyBag::new();
     blob_options.set_type("application/json");
 
     let blob = Blob::new_with_str_sequence_and_options(
@@ -546,7 +546,7 @@ pub fn home() -> Html {
                 </button>
 
                 <button 
-                    class="btn btn-success mt-2"
+                    class="btn btn-primary mt-2"
                     onclick={onclick_download}
                 >
                     <i class="fas fa-download mr-2"></i>
