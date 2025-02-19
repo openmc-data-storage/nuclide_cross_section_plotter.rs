@@ -192,13 +192,13 @@ fn convert_string(entry: &Entry) -> String {
 async fn download_xs_cache(selected_indexes: HashSet<usize>) {
     let cache = generate_cache(&selected_indexes).await;
 
-    // Convert the cache data to JSON
-    let json_data = serde_json::to_string(&cache).unwrap();
+    // Convert the cache data to a pretty-printed JSON string
+    let json_data = serde_json::to_string_pretty(&cache).unwrap();
 
     // Create a Blob from the JSON data
     let mut blob_options = BlobPropertyBag::new();
     blob_options.set_type("application/json");
-    
+
     let blob = Blob::new_with_str_sequence_and_options(
         &Array::of1(&JsValue::from_str(&json_data)),
         &blob_options,
@@ -216,7 +216,6 @@ async fn download_xs_cache(selected_indexes: HashSet<usize>) {
     document.body().unwrap().append_child(&a).unwrap();
 
     // Trigger the download
-
     let a: HtmlElement = a.dyn_into::<HtmlElement>().unwrap();
     a.click();
 
