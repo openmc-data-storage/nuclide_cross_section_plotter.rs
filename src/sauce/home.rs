@@ -311,52 +311,128 @@ pub fn home() -> Html {
         })
     };
 
-    let filtered_data: Vec<TableLine> = mock_data.data
-        .iter()
-        .enumerate()
-        .filter(|(_, entry)| {
-            let element = &entry.element;
-            let nucleons = &entry.nucleons;
-            let reaction = &entry.reaction;
-            let mt = &entry.mt;
-            let library = &entry.library;
-
-            let element_match = match element_search {
-                Some(ref term) => element.to_lowercase().contains(&term.to_lowercase()),
-                None => true,
-            };
-            let nucleons_match = match nucleons_search {
-                Some(ref term) => nucleons.to_string().contains(&*term),
-                None => true,
-            };
-            let reaction_match = match reaction_search {
-                Some(ref term) => reaction.to_lowercase().contains(&term.to_lowercase()),
-                None => true,
-            };
-            let mt_match = match mt_search {
-                Some(ref term) => mt.to_string().contains(&*term),
-                None => true,
-            };
-            let library_match = match library_search {
-                Some(ref term) => library.to_lowercase().contains(&term.to_lowercase()),
-                None => true,
-            };
-
-            element_match && nucleons_match && reaction_match && mt_match && library_match
-        })
-        .map(|(index, entry)| TableLine {
-            original_index: index,
-            id: entry.id,
-            element: entry.element.clone(),
-            nucleons: entry.nucleons.clone(),
-            reaction: entry.reaction.clone(),
-            mt: entry.mt.clone(),
-            library: entry.library.clone(),
-            temperature: entry.temperature.clone(),
-            checked: selected_indexes.current().contains(&index),
-            sum_callback: callback_sum.clone(),
-        })
-        .collect();
+    let filtered_data: Vec<TableLine> = {
+        // First pass: check for exact matches across all entries
+        let has_element_exact = match element_search {
+            Some(ref term) => {
+                let term_lower = term.to_lowercase();
+                mock_data.data.iter().any(|entry| entry.element.to_lowercase() == term_lower)
+            }
+            None => true,
+        };
+        let has_nucleons_exact = match nucleons_search {
+            Some(ref term) => {
+                mock_data.data.iter().any(|entry| entry.nucleons.to_string() == *term)
+            }
+            None => true,
+        };
+        let has_reaction_exact = match reaction_search {
+            Some(ref term) => {
+                let term_lower = term.to_lowercase();
+                mock_data.data.iter().any(|entry| entry.reaction.to_lowercase() == term_lower)
+            }
+            None => true,
+        };
+        let has_mt_exact = match mt_search {
+            Some(ref term) => {
+                mock_data.data.iter().any(|entry| entry.mt.to_string() == *term)
+            }
+            None => true,
+        };
+        let has_library_exact = match library_search {
+            Some(ref term) => {
+                let term_lower = term.to_lowercase();
+                mock_data.data.iter().any(|entry| entry.library.to_lowercase() == term_lower)
+            }
+            None => true,
+        };
+    
+        // Second pass: filter based on match criteria
+        mock_data.data
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| {
+                let element = &entry.element;
+                let nucleons = &entry.nucleons;
+                let reaction = &entry.reaction;
+                let mt = &entry.mt;
+                let library = &entry.library;
+    
+                let element_match = match element_search {
+                    Some(ref term) => {
+                        let term_lower = term.to_lowercase();
+                        let element_lower = element.to_lowercase();
+                        if has_element_exact {
+                            element_lower == term_lower
+                        } else {
+                            element_lower.starts_with(&term_lower)
+                        }
+                    }
+                    None => true,
+                };
+                let nucleons_match = match nucleons_search {
+                    Some(ref term) => {
+                        let nucleons_str = nucleons.to_string();
+                        if has_nucleons_exact {
+                            nucleons_str == *term
+                        } else {
+                            nucleons_str.starts_with(term)
+                        }
+                    }
+                    None => true,
+                };
+                let reaction_match = match reaction_search {
+                    Some(ref term) => {
+                        let term_lower = term.to_lowercase();
+                        let reaction_lower = reaction.to_lowercase();
+                        if has_reaction_exact {
+                            reaction_lower == term_lower
+                        } else {
+                            reaction_lower.starts_with(&term_lower)
+                        }
+                    }
+                    None => true,
+                };
+                let mt_match = match mt_search {
+                    Some(ref term) => {
+                        let mt_str = mt.to_string();
+                        if has_mt_exact {
+                            mt_str == *term
+                        } else {
+                            mt_str.starts_with(term)
+                        }
+                    }
+                    None => true,
+                };
+                let library_match = match library_search {
+                    Some(ref term) => {
+                        let term_lower = term.to_lowercase();
+                        let library_lower = library.to_lowercase();
+                        if has_library_exact {
+                            library_lower == term_lower
+                        } else {
+                            library_lower.starts_with(&term_lower)
+                        }
+                    }
+                    None => true,
+                };
+    
+                element_match && nucleons_match && reaction_match && mt_match && library_match
+            })
+            .map(|(index, entry)| TableLine {
+                original_index: index,
+                id: entry.id,
+                element: entry.element.clone(),
+                nucleons: entry.nucleons.clone(),
+                reaction: entry.reaction.clone(),
+                mt: entry.mt.clone(),
+                library: entry.library.clone(),
+                temperature: entry.temperature.clone(),
+                checked: selected_indexes.current().contains(&index),
+                sum_callback: callback_sum.clone(),
+            })
+            .collect()
+    };
 
     let limit = 10;
     let current_page = if filtered_data.is_empty() {
