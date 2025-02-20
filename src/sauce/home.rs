@@ -20,6 +20,7 @@ use web_sys::{Blob, BlobPropertyBag, Url};
 use wasm_bindgen::JsValue;
 use js_sys::Array;
 use web_sys::wasm_bindgen::JsCast;
+use serde_json::Value; // Import Value from serde_json
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -195,12 +196,24 @@ async fn download_xs_cache(selected_indexes: HashSet<usize>) {
     // Convert the cache data to a pretty-printed JSON string
     let json_data = serde_json::to_string_pretty(&cache).unwrap();
 
+    // Deserialize the JSON string into a serde_json::Value
+    let mut json_value: Value = serde_json::from_str(&json_data).unwrap();
+
+    // Remove the "checkbox_selected" key
+    if let Value::Object(ref mut map) = json_value {
+        map.remove("checkbox_selected");
+    }
+
+    // Serialize the modified JSON value back to a string
+    let modified_json_data = serde_json::to_string_pretty(&json_value).unwrap();
+
+
     // Create a Blob from the JSON data
     let blob_options = BlobPropertyBag::new();
     blob_options.set_type("application/json");
 
     let blob = Blob::new_with_str_sequence_and_options(
-        &Array::of1(&JsValue::from_str(&json_data)),
+        &Array::of1(&JsValue::from_str(&modified_json_data)),
         &blob_options,
     ).unwrap();
 
@@ -546,10 +559,10 @@ pub fn home() -> Html {
                 </button>
 
                 <button 
-                    class="btn btn-primary mt-2"
+                    class="btn btn-primary me-2"
                     onclick={onclick_download}
                 >
-                    <i class="fas fa-download mr-2"></i>
+                    <i class="fas fa-download me-2"></i>
                     {" Download Cross Section Data"}
                 </button>
                 
