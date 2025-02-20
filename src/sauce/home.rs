@@ -14,6 +14,15 @@ use plotly::layout::{AxisType};
 use yew::prelude::*;
 use serde::Deserialize;
 
+use wasm_bindgen_futures::spawn_local;
+use web_sys::HtmlElement;
+use web_sys::{Blob, BlobPropertyBag, Url};
+use wasm_bindgen::JsValue;
+use js_sys::Array;
+use web_sys::wasm_bindgen::JsCast;
+use serde_json::Value;
+
+
 #[derive(Debug, Serialize, Deserialize)]
 struct ReactionData {
     #[serde(rename = "energy")]
@@ -181,6 +190,52 @@ fn convert_string(entry: &Entry) -> String {
     output
 }
 
+async fn download_xs_cache(selected_indexes: HashSet<usize>) {
+    let cache = generate_cache(&selected_indexes).await;
+
+    // Convert the cache data to a pretty-printed JSON string
+    let json_data = serde_json::to_string_pretty(&cache).unwrap();
+
+    // Deserialize the JSON string into a serde_json::Value
+    let mut json_value: Value = serde_json::from_str(&json_data).unwrap();
+
+    // Remove the "checkbox_selected" key
+    if let Value::Object(ref mut map) = json_value {
+        map.remove("checkbox_selected");
+    }
+
+    // Serialize the modified JSON value back to a string
+    let modified_json_data = serde_json::to_string_pretty(&json_value).unwrap();
+
+
+    // Create a Blob from the JSON data
+    let blob_options = BlobPropertyBag::new();
+    blob_options.set_type("application/json");
+
+    let blob = Blob::new_with_str_sequence_and_options(
+        &Array::of1(&JsValue::from_str(&modified_json_data)),
+        &blob_options,
+    ).unwrap();
+
+    // Create a URL for the Blob
+    let url = Url::create_object_url_with_blob(&blob).unwrap();
+
+    // Create a hidden anchor element to trigger the download
+    let document = web_sys::window().unwrap().document().unwrap();
+    let a = document.create_element("a").unwrap();
+    a.set_attribute("href", &url).unwrap();
+    a.set_attribute("download", "cross_sections_from_xsplot.json").unwrap();
+    a.set_attribute("style", "display: none;").unwrap();
+    document.body().unwrap().append_child(&a).unwrap();
+
+    // Trigger the download
+    let a: HtmlElement = a.dyn_into::<HtmlElement>().unwrap();
+    a.click();
+
+    // Clean up by revoking the object URL
+    Url::revoke_object_url(&url).unwrap();
+    document.body().unwrap().remove_child(&a).unwrap();
+}
 
 #[function_component(Home)]
 pub fn home() -> Html {
@@ -381,6 +436,17 @@ pub fn home() -> Html {
         })
     };
 
+
+    let onclick_download = {
+        let selected_indexes = selected_indexes.clone();
+        Callback::from(move |_| {
+            let selected_indexes = selected_indexes.current().clone();
+            spawn_local(async move {
+                download_xs_cache(selected_indexes).await;
+            });
+        })
+    };
+
     // let pagination_options = yew_custom_components::pagination::Options::default()
     //     .show_prev_next(true)
     //     .show_first_last(true)
@@ -491,6 +557,15 @@ pub fn home() -> Html {
                 >
                     {if *is_y_log { "Switch Y to Linear Scale" } else { "Switch Y to Log Scale" }}
                 </button>
+
+                <button 
+                    class="btn btn-primary me-2"
+                    onclick={onclick_download}
+                >
+                    <i class="fas fa-download me-2"></i>
+                    {" Download Cross Section Data"}
+                </button>
+                
             </div>
                 
             <div class="d-flex mb-2">
