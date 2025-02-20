@@ -322,23 +322,23 @@ pub fn home() -> Html {
             let library = &entry.library;
 
             let element_match = match element_search {
-                Some(ref term) => element.to_lowercase().contains(&term.to_lowercase()),
+                Some(ref term) => element.to_lowercase() == term.to_lowercase(),
                 None => true,
             };
             let nucleons_match = match nucleons_search {
-                Some(ref term) => nucleons.to_string().contains(&*term),
+                Some(ref term) => nucleons.to_string() == *term,
                 None => true,
             };
             let reaction_match = match reaction_search {
-                Some(ref term) => reaction.to_lowercase().contains(&term.to_lowercase()),
+                Some(ref term) => reaction.to_lowercase() == term.to_lowercase(),
                 None => true,
             };
             let mt_match = match mt_search {
-                Some(ref term) => mt.to_string().contains(&*term),
+                Some(ref term) => mt.to_string() == *term,
                 None => true,
             };
             let library_match = match library_search {
-                Some(ref term) => library.to_lowercase().contains(&term.to_lowercase()),
+                Some(ref term) => library.to_lowercase() == term.to_lowercase(),
                 None => true,
             };
 
