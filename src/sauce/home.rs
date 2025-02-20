@@ -224,7 +224,7 @@ async fn download_xs_cache(selected_indexes: HashSet<usize>) {
     let document = web_sys::window().unwrap().document().unwrap();
     let a = document.create_element("a").unwrap();
     a.set_attribute("href", &url).unwrap();
-    a.set_attribute("download", "xs_cache.json").unwrap();
+    a.set_attribute("download", "cross_sections_from_xsplot.json").unwrap();
     a.set_attribute("style", "display: none;").unwrap();
     document.body().unwrap().append_child(&a).unwrap();
 
