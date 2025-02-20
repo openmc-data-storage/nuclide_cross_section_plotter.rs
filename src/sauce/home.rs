@@ -320,10 +320,22 @@ pub fn home() -> Html {
             }
             None => true,
         };
+        let has_nucleons_exact = match nucleons_search {
+            Some(ref term) => {
+                mock_data.data.iter().any(|entry| entry.nucleons.to_string() == *term)
+            }
+            None => true,
+        };
         let has_reaction_exact = match reaction_search {
             Some(ref term) => {
                 let term_lower = term.to_lowercase();
                 mock_data.data.iter().any(|entry| entry.reaction.to_lowercase() == term_lower)
+            }
+            None => true,
+        };
+        let has_mt_exact = match mt_search {
+            Some(ref term) => {
+                mock_data.data.iter().any(|entry| entry.mt.to_string() == *term)
             }
             None => true,
         };
@@ -359,7 +371,14 @@ pub fn home() -> Html {
                     None => true,
                 };
                 let nucleons_match = match nucleons_search {
-                    Some(ref term) => nucleons.to_string() == *term,
+                    Some(ref term) => {
+                        let nucleons_str = nucleons.to_string();
+                        if has_nucleons_exact {
+                            nucleons_str == *term
+                        } else {
+                            nucleons_str.starts_with(term)
+                        }
+                    }
                     None => true,
                 };
                 let reaction_match = match reaction_search {
@@ -375,7 +394,14 @@ pub fn home() -> Html {
                     None => true,
                 };
                 let mt_match = match mt_search {
-                    Some(ref term) => mt.to_string() == *term,
+                    Some(ref term) => {
+                        let mt_str = mt.to_string();
+                        if has_mt_exact {
+                            mt_str == *term
+                        } else {
+                            mt_str.starts_with(term)
+                        }
+                    }
                     None => true,
                 };
                 let library_match = match library_search {
