@@ -543,7 +543,7 @@ pub fn home() -> Html {
         <>
             <h1>{"Nuclide Microscopic Cross Section Plotter"}</h1>
 
-            <h5>{"A searchable database of neutron cross sections with interactive plotting created by Jon Shimwell."}</h5>       
+            <h5>{"A searchable database of neutron cross sections with interactive plotting by Jon Shimwell. See my other projects on "}<a href="https://xsplot.com/" target="_blank">{"xsplot.com"}</a></h5>
 
 
             <div class="d-flex mb-2">
