@@ -4,7 +4,8 @@
 import { LIBRARIES, libraryLabel } from './libraries.js';
 import { mergeStores, KIND_PHOTON } from './index_loader.js';
 import {
-  COLUMNS, buildDictionaries, filterRows, sortRows, paginate, rowId, parseRowId, reactionName,
+  buildDictionaries, filterRows, sortRows, paginate, rowId, parseRowId, reactionName,
+  rowIndex, rowBit, temperatureLabel, NO_TEMPERATURE,
 } from './table.js';
 import { encodeState, decodeState } from './url_state.js';
 import { buildFigure, isEnergyRelease } from './plot.js';
@@ -12,14 +13,16 @@ import { seriesToJson, seriesToCsv, downloadText } from './download.js';
 import { ATOMIC_SYMBOL, nucleonsLabel, parseNuclide } from './elements.js';
 
 const PAGE_SIZE = 10;
-const TEMPERATURES = ['250K', '294K', '600K', '900K', '1200K', '2500K', '0K'];
+/// What the temperature filter box starts with, so the table opens at room
+/// temperature rather than seven rows per reaction.
+const DEFAULT_TEMPERATURE_FILTER = '294';
 const $ = (id) => document.getElementById(id);
 
 // --- state ------------------------------------------------------------------
 
 const state = {
   ...decodeState(location.hash),
-  filters: {},
+  filters: { temperature: DEFAULT_TEMPERATURE_FILTER },
   sort: { column: null, descending: false },
   page: 0,
 };
@@ -34,7 +37,7 @@ let filtered = new Uint32Array(0);
 /// Row facts for selected ids that are not in a loaded store yet (restored
 /// from the URL): looked up when the store arrives.
 const rowFacts = new Map();
-/// Drawn series by `${rowId}@${temperature}`.
+/// Drawn series by row id (which names the temperature).
 const seriesCache = new Map();
 const seriesErrors = new Map();
 /// Colour slot per series key, handed out in drawing order, kept until Clear.
@@ -136,55 +139,56 @@ function resolveRowFacts() {
   const wanted = new Map(unresolved.map((id) => [id, parseRowId(id)]).filter(([, p]) => p));
   for (let i = 0; i < merged.n && wanted.size; i++) {
     for (const [id, p] of wanted) {
-      if (merged.mt[i] === p.mt && LIBRARIES[merged.lib[i]].id === p.library && merged.names[merged.name[i]] === p.name) {
-        rowFacts.set(id, factsOfRow(i));
-        wanted.delete(id);
-      }
+      if (merged.mt[i] !== p.mt || LIBRARIES[merged.lib[i]].id !== p.library || merged.names[merged.name[i]] !== p.name) continue;
+      const bit = p.temperature ? merged.temperatures.indexOf(p.temperature) : NO_TEMPERATURE;
+      if (bit < 0 || (bit !== NO_TEMPERATURE && !(merged.tmask[i] & (1 << bit)))) continue;
+      rowFacts.set(id, factsOfRow(i, bit));
+      wanted.delete(id);
     }
   }
 }
 
-function factsOfRow(i) {
+function factsOfRow(i, bit) {
   return {
-    kind: merged.kind[i], tmask: merged.tmask[i], z: merged.z[i], a: merged.a[i], meta: merged.meta[i],
+    kind: merged.kind[i], z: merged.z[i], a: merged.a[i], meta: merged.meta[i],
     name: merged.names[merged.name[i]], mt: merged.mt[i], library: LIBRARIES[merged.lib[i]].id,
+    temperature: bit === NO_TEMPERATURE ? null : merged.temperatures[bit],
   };
 }
 
 // --- table ----------------------------------------------------------------------
 
 const enabledLibs = () => Uint8Array.from(LIBRARIES, (l) => (state.libraries.has(l.id) ? 1 : 0));
-const temperatureMask = () => TEMPERATURES.reduce((m, t, i) => (state.temperatures.has(t) ? m | (1 << i) : m), 0);
 
 function renderTable() {
   const tbody = $('rows');
   if (!merged) {
-    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-secondary">Loading the reaction list...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">Loading the reaction list...</td></tr>';
     return;
   }
-  // The store's temperature order is the published one; map the page's mask.
-  let mask = 0;
-  TEMPERATURES.forEach((t, i) => { const bit = merged.temperatures.indexOf(t); if (bit >= 0 && (temperatureMask() >> i) & 1) mask |= 1 << bit; });
-  filtered = filterRows(merged, dictionaries, state.filters, enabledLibs(), mask);
+  filtered = filterRows(merged, dictionaries, state.filters, enabledLibs());
   if (state.sort.column) filtered = sortRows(filtered, merged, dictionaries, state.sort.column, state.sort.descending);
   const page = paginate(filtered, state.page, PAGE_SIZE);
   state.page = page.page;
 
   const html = [];
-  for (const i of page.rows) {
-    const id = rowId(merged, i);
+  for (const packed of page.rows) {
+    const i = rowIndex(packed);
+    const bit = rowBit(packed);
+    const id = rowId(merged, packed);
     const checked = state.selection.has(id) ? ' checked' : '';
     const photon = merged.kind[i] === KIND_PHOTON;
-    html.push(`<tr data-row="${i}">
+    html.push(`<tr data-row="${packed}">
       <td><input class="form-check-input row-select" type="checkbox" data-id="${id}"${checked} aria-label="select ${id}"></td>
       <td>${ATOMIC_SYMBOL[merged.z[i]]}</td>
       <td class="mono">${photon ? '<span class="text-secondary">photon</span>' : nucleonsLabel(merged.a[i], merged.meta[i])}</td>
       <td>${reactionName(merged.mt[i], merged.kind[i])}</td>
       <td class="mono">${merged.mt[i]}</td>
       <td>${libraryLabel(LIBRARIES[merged.lib[i]].id)}</td>
+      <td class="mono">${temperatureLabel(merged, bit)}</td>
     </tr>`);
   }
-  if (!html.length) html.push('<tr><td colspan="6" class="text-center text-secondary">No reactions match these filters.</td></tr>');
+  if (!html.length) html.push('<tr><td colspan="7" class="text-center text-secondary">No reactions match these filters.</td></tr>');
   tbody.innerHTML = html.join('');
   $('counter').textContent = `${state.selection.size} selected · ${page.total.toLocaleString()} reactions match`;
   renderPagination(page);
@@ -208,32 +212,24 @@ function renderPagination({ page, pages }) {
 
 // --- selection and plot ------------------------------------------------------------
 
-function seriesName(f, temperature) {
-  const nuclide = f.kind === KIND_PHOTON ? f.name : f.name;
-  const t = f.kind === KIND_PHOTON || !temperature ? '' : ` ${temperature.replace(/K$/, ' K')}`;
-  return `${nuclide} ${reactionName(f.mt, f.kind)} ${libraryLabel(f.library)}${t}`;
+function seriesName(f) {
+  const t = f.temperature ? ` ${f.temperature.replace(/K$/, ' K')}` : '';
+  return `${f.name} ${reactionName(f.mt, f.kind)} ${libraryLabel(f.library)}${t}`;
 }
 
-/// The (id, temperature) pairs the current selection and temperatures call for.
+/// The rows the current selection calls for, once their facts are known.
 function wantedSeries() {
   const wanted = [];
   for (const id of state.selection) {
     const f = rowFacts.get(id);
-    if (!f) continue;
-    if (f.kind === KIND_PHOTON) { wanted.push({ id, temperature: null, f }); continue; }
-    const temps = merged ? merged.temperatures : TEMPERATURES;
-    for (const t of TEMPERATURES) {
-      if (!state.temperatures.has(t)) continue;
-      const bit = temps.indexOf(t);
-      if (bit >= 0 && (f.tmask & (1 << bit))) wanted.push({ id, temperature: t, f });
-    }
+    if (f) wanted.push({ id, temperature: f.temperature, f });
   }
   return wanted;
 }
 
 async function updatePlot() {
   const wanted = wantedSeries();
-  const keyOf = (w) => `${w.id}@${w.temperature ?? ''}`;
+  const keyOf = (w) => w.id;
   const missing = wanted.filter((w) => !seriesCache.has(keyOf(w)) && !seriesErrors.has(keyOf(w)));
   if (missing.length) {
     const items = missing.map((w) => ({
@@ -262,7 +258,7 @@ function drawPlot(wanted) {
   const drawn = [];
   const errors = [];
   for (const w of wanted) {
-    const key = `${w.id}@${w.temperature ?? ''}`;
+    const key = w.id;
     const s = seriesCache.get(key);
     if (!s) {
       if (seriesErrors.has(key)) errors.push(seriesErrors.get(key));
@@ -270,8 +266,8 @@ function drawPlot(wanted) {
     }
     if (!slots.has(key)) slots.set(key, slots.size);
     drawn.push({
-      key, slot: slots.get(key), name: seriesName(w.f, w.temperature), energy: s.energy, xs: s.xs, mt: w.f.mt,
-      meta: { ...w.f, temperature: w.temperature },
+      key, slot: slots.get(key), name: seriesName(w.f), energy: s.energy, xs: s.xs, mt: w.f.mt,
+      meta: { ...w.f },
     });
   }
   if (errors.length) showError([...new Set(errors)].join('\n')); else clearError();
@@ -311,7 +307,6 @@ function syncUrl() {
 function applyUrl() {
   const decoded = decodeState(location.hash);
   state.libraries = decoded.libraries;
-  state.temperatures = decoded.temperatures;
   state.selection = decoded.selection;
   state.xLog = decoded.xLog;
   state.yLog = decoded.yLog;
@@ -326,7 +321,6 @@ function applyUrl() {
 
 function renderControls() {
   for (const box of document.querySelectorAll('#libraries input')) box.checked = state.libraries.has(box.value);
-  for (const box of document.querySelectorAll('#temperatures input')) box.checked = state.temperatures.has(box.value);
   $('x-scale').textContent = state.xLog ? 'X: log' : 'X: linear';
   $('y-scale').textContent = state.yLog ? 'Y: log' : 'Y: linear';
 }
@@ -335,12 +329,6 @@ function buildControls() {
   $('libraries').innerHTML = LIBRARIES.map((l) => `<div class="form-check form-check-inline">
       <input class="form-check-input" type="checkbox" id="lib-${l.id}" value="${l.id}">
       <label class="form-check-label" for="lib-${l.id}">${l.label}</label></div>`).join('');
-  $('temperatures').innerHTML = TEMPERATURES.map((t) => {
-    const label = t === '0K' ? '0 K (elastic only)' : t.replace(/K$/, ' K');
-    return `<div class="form-check form-check-inline">
-      <input class="form-check-input" type="checkbox" id="temp-${t}" value="${t}">
-      <label class="form-check-label" for="temp-${t}">${label}</label></div>`;
-  }).join('');
 
   $('libraries').addEventListener('change', (e) => {
     if (!e.target.matches('input')) return;
@@ -351,19 +339,13 @@ function buildControls() {
     renderTable();
     syncUrl();
   });
-  $('temperatures').addEventListener('change', (e) => {
-    if (!e.target.matches('input')) return;
-    if (e.target.checked) state.temperatures.add(e.target.value); else state.temperatures.delete(e.target.value);
-    renderTable();
-    updatePlot();
-    syncUrl();
-  });
 
   // One debounce for all five boxes, reading every box when it fires: a
   // per-box timer would let a quick tab-and-type across columns cancel the
   // earlier columns' updates.
   let filterTimer = null;
   const filterInputs = [...document.querySelectorAll('.filter-input')];
+  for (const input of filterInputs) input.value = state.filters[input.dataset.column] ?? '';
   const applyFilters = () => {
     for (const input of filterInputs) state.filters[input.dataset.column] = input.value;
     state.page = 0;
@@ -384,8 +366,8 @@ function buildControls() {
   $('rows').addEventListener('change', (e) => {
     if (!e.target.matches('.row-select')) return;
     const id = e.target.dataset.id;
-    const row = Number(e.target.closest('tr').dataset.row);
-    if (e.target.checked) { state.selection.add(id); rowFacts.set(id, factsOfRow(row)); } else state.selection.delete(id);
+    const packed = Number(e.target.closest('tr').dataset.row);
+    if (e.target.checked) { state.selection.add(id); rowFacts.set(id, factsOfRow(rowIndex(packed), rowBit(packed))); } else state.selection.delete(id);
     $('counter').textContent = `${state.selection.size} selected · ${filtered.length.toLocaleString()} reactions match`;
     updatePlot();
     syncUrl();

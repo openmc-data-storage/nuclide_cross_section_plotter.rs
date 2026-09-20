@@ -73,24 +73,33 @@ await page.fill('.filter-input[data-column=element]', 'Li');
 await page.fill('.filter-input[data-column=nucleons]', '6');
 await page.fill('.filter-input[data-column=mt]', '105');
 await waitForRow('(n,t) 105');
-step('filters narrow to one row', (await rows())[0] === 'Li 6 (n,t) 105 ENDF/B-VIII.1', (await rows())[0]);
+step('filters narrow to one row at 294 K', (await rows())[0] === 'Li 6 (n,t) 105 ENDF/B-VIII.1 294 K', (await rows())[0]);
 
 await page.check('#rows tr[data-row] .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 1, null, { timeout: 60000 });
 let p = await plot();
 step('ticking a row draws it at 294 K', p.names[0] === 'Li6 (n,t) ENDF/B-VIII.1 294 K' && p.lengths[0] > 100, JSON.stringify(p.names));
 
-await page.check('#temp-2500K');
+// The same reaction at another temperature is another row.
+await page.fill('.filter-input[data-column=temperature]', '2500');
+await waitForRow('(n,t) 105 ENDF/B-VIII.1 2500 K');
+await page.check('#rows tr[data-row] .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 2, null, { timeout: 60000 });
 p = await plot();
-step('ticking a temperature adds a trace', p.names[1] === 'Li6 (n,t) ENDF/B-VIII.1 2500 K');
+step('ticking the 2500 K row adds a trace', p.names[1] === 'Li6 (n,t) ENDF/B-VIII.1 2500 K', JSON.stringify(p.names));
+
+// Clearing the temperature filter lists every temperature of the reaction.
+await page.fill('.filter-input[data-column=temperature]', '');
+await page.waitForFunction(() => document.querySelectorAll('#rows tr[data-row]').length === 6, null, { timeout: 15000 });
+step('a blank temperature filter lists all six temperatures', (await rows()).map((r) => r.split(' ').slice(-2).join(' ')).join(',') === '250 K,294 K,600 K,900 K,1200 K,2500 K', (await rows()).join(' | '));
+await page.fill('.filter-input[data-column=temperature]', '294');
 
 await page.fill('.filter-input[data-column=mt]', '301');
 await waitForRow('heating 301');
 await page.check('#rows tr[data-row] .row-select');
-await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 4, null, { timeout: 60000 });
+await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 3, null, { timeout: 60000 });
 p = await plot();
-step('heating goes on a right-hand eV·barn axis', p.y2 === 'Heating (eV·barn)' && p.onY2.filter((a) => a === 'y2').length === 2, JSON.stringify(p));
+step('heating goes on a right-hand eV·barn axis', p.y2 === 'Heating (eV·barn)' && p.onY2.filter((a) => a === 'y2').length === 1, JSON.stringify(p));
 
 await page.click('#y-scale');
 p = await plot();
@@ -101,20 +110,20 @@ await page.fill('.filter-input[data-column=nucleons]', '');
 await page.fill('.filter-input[data-column=mt]', '502');
 await waitForRow('(γ,coherent) 502');
 await page.check('#rows tr[data-row] .row-select');
-await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 5, null, { timeout: 60000 });
+await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 4, null, { timeout: 60000 });
 p = await plot();
-step('a photon reaction plots without a temperature', p.names[4] === 'H (γ,coherent) ENDF/B-VIII.1', p.names[4]);
+step('a photon reaction plots without a temperature', p.names[3] === 'H (γ,coherent) ENDF/B-VIII.1' && (await rows())[0].endsWith('\u2014'), `${p.names[3]} | ${(await rows())[0]}`);
 
 await page.waitForTimeout(300);
 const hash = await page.evaluate(() => location.hash);
-step('the URL carries the state', hash.includes('s=endf-b8.1:Li6:105.301;endf-b8.1:H:502') && hash.includes('t=294,2500') && hash.includes('y=lin'), hash);
+step('the URL carries the state', hash.includes('s=endf-b8.1:Li6:294:105.301;endf-b8.1:Li6:2500:105;endf-b8.1:H::502') && hash.includes('y=lin'), hash);
 
 await page.screenshot({ path: `${SHOTS}plot${noRange ? '-no-range' : ''}.png`, fullPage: true });
 
 await page.goto(`${url}index.html${hash}`, { waitUntil: 'load' });
-await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 5, null, { timeout: 90000 });
+await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 4, null, { timeout: 90000 });
 p = await plot();
-step('reloading the URL restores the plot', p.names.length === 5 && p.ytype === 'linear');
+step('reloading the URL restores the plot', p.names.length === 4 && p.ytype === 'linear');
 
 // Read the download by watching the blob handed to createObjectURL; the real
 // URL is still made so the click stays harmless.
@@ -125,7 +134,7 @@ const downloaded = await page.evaluate(() => new Promise((resolve) => {
   setTimeout(() => { URL.createObjectURL = orig; }, 0);
 }));
 const parsed = JSON.parse(downloaded);
-step('the JSON download has one object per series with units', parsed.length === 5 && parsed.every((s) => s.energy_eV.length === s.xs.length && s.units) && parsed.some((s) => s.units === 'eV barn'), `${parsed.length} series`);
+step('the JSON download has one object per series with units', parsed.length === 4 && parsed.every((s) => s.energy_eV.length === s.xs.length && s.units) && parsed.some((s) => s.units === 'eV barn') && parsed.some((s) => s.temperature_K === 2500), `${parsed.length} series`);
 
 const errorText = await page.textContent('#error');
 step('no error is shown', errorText.trim() === '', errorText.trim());

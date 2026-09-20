@@ -1,39 +1,31 @@
-// The plot as a URL: enabled libraries, temperatures, selected reactions and
-// axis scales in the hash, so a plot can be linked and comes back on reload.
+// The plot as a URL: enabled libraries, selected rows and axis scales in the
+// hash, so a plot can be linked and comes back on reload.
 //
-//   #l=endf-b8.1,jendl-5.0&t=294,600&s=endf-b8.1:Fe56:16.102;jendl-5.0:Li6:1&x=lin&y=lin
+//   #l=endf-b8.1,jendl-5.0&s=endf-b8.1:Fe56:294:16.102;endf-b8.1:Fe56:600:16;endf-b8.1:Fe::502&x=lin&y=lin
 //
-// Defaults are omitted: all libraries, 294 K only, both axes logarithmic.
-// Selections are grouped by (library, nuclide) with the MTs dotted, which keeps
-// a plot of one nuclide's many reactions short. Anything unparseable is
-// dropped rather than failing the page.
+// Defaults are omitted: all libraries, both axes logarithmic. Selections are
+// grouped by (library, nuclide, temperature) with the MTs dotted; the
+// temperature is the bare Kelvin number and is empty for a photon row, which
+// has none. Anything unparseable is dropped rather than failing the page.
 
 import { LIBRARIES, DEFAULT_LIBRARY } from './libraries.js';
 
 const LIBRARY_IDS = new Set(LIBRARIES.map((l) => l.id));
-export const DEFAULT_TEMPERATURE = '294K';
 
-/// Kelvin label -> the number written in the URL: "294K" -> "294".
-const tempToUrl = (label) => label.replace(/K$/, '');
-const tempFromUrl = (s) => (/^\d+(\.\d+)?$/.test(s) ? `${s}K` : null);
-
-/// `state`: {libraries: Set<id>, temperatures: Set<label>, selection: Set<rowId>, xLog, yLog}.
+/// `state`: {libraries: Set<id>, selection: Set<rowId>, xLog, yLog}. A row id
+/// is `library/name/mt` or `library/name/mt/294K`.
 export function encodeState(state) {
   const parts = [];
   const libs = [...state.libraries].filter((id) => LIBRARY_IDS.has(id));
   if (libs.length && libs.length < LIBRARIES.length) {
     parts.push(`l=${LIBRARIES.map((l) => l.id).filter((id) => state.libraries.has(id)).join(',')}`);
   }
-  const temps = [...state.temperatures];
-  if (!(temps.length === 1 && temps[0] === DEFAULT_TEMPERATURE)) {
-    parts.push(`t=${temps.map(tempToUrl).join(',')}`);
-  }
   if (state.selection.size) {
     const groups = new Map();
     for (const id of state.selection) {
-      const m = /^([^/]+)\/([^/]+)\/(\d+)$/.exec(id);
+      const m = /^([^/]+)\/([^/]+)\/(\d+)(?:\/(\d+(?:\.\d+)?)K)?$/.exec(id);
       if (!m) continue;
-      const key = `${m[1]}:${m[2]}`;
+      const key = `${m[1]}:${m[2]}:${m[4] ?? ''}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(Number(m[3]));
     }
@@ -51,7 +43,6 @@ export function encodeState(state) {
 export function decodeState(hash) {
   const state = {
     libraries: new Set(LIBRARIES.map((l) => l.id)),
-    temperatures: new Set([DEFAULT_TEMPERATURE]),
     selection: new Set(),
     xLog: true,
     yLog: true,
@@ -67,16 +58,13 @@ export function decodeState(hash) {
     const libs = fields.get('l').split(',').filter((id) => LIBRARY_IDS.has(id));
     state.libraries = new Set(libs.length ? libs : [DEFAULT_LIBRARY]);
   }
-  if (fields.has('t')) {
-    const temps = fields.get('t').split(',').map(tempFromUrl).filter(Boolean);
-    state.temperatures = new Set(temps.length ? temps : [DEFAULT_TEMPERATURE]);
-  }
   if (fields.has('s')) {
     for (const group of fields.get('s').split(';')) {
-      const m = /^([a-z0-9.-]+):([A-Za-z0-9_]+):([^:]+)$/.exec(group);
+      const m = /^([a-z0-9.-]+):([A-Za-z0-9_]+):(\d+(?:\.\d+)?)?:([^:]+)$/.exec(group);
       if (!m || !LIBRARY_IDS.has(m[1])) continue;
-      for (const mt of m[3].split('.')) {
-        if (/^\d+$/.test(mt)) state.selection.add(`${m[1]}/${m[2]}/${Number(mt)}`);
+      const suffix = m[3] ? `/${m[3]}K` : '';
+      for (const mt of m[4].split('.')) {
+        if (/^\d+$/.test(mt)) state.selection.add(`${m[1]}/${m[2]}/${Number(mt)}${suffix}`);
       }
     }
   }

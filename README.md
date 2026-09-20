@@ -5,8 +5,10 @@ The source of the Nuclide Cross Section Plotter hosted on [xsplot.com](https://x
 [Direct link to the web app](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/index.html)
 
 Search every published neutron and photon reaction across six nuclear data
-libraries, plot them at any of the published temperatures, compare libraries
-and temperatures on one plot, and download the data. The page is a static site
+libraries and temperatures, compare libraries and temperatures on one plot,
+and download the data. Each table row is one nuclide, reaction, library and
+temperature; the Temperature filter starts at 294 K and clearing it lists
+every published temperature. The page is a static site
 with no build step: plain JavaScript modules, Bootstrap and Plotly.
 
 ## Where the data comes from
@@ -62,7 +64,7 @@ node tests/e2e.mjs       # drives the page in headless Chromium
 
 The sharing URL keeps the enabled libraries, temperatures, selected reactions
 and axis scales in the hash, for example
-`#l=endf-b8.1,jeff-4.0&t=294,600&s=endf-b8.1:Fe56:16.102;jeff-4.0:Li6:1`.
+`#l=endf-b8.1,jeff-4.0&s=endf-b8.1:Fe56:294:16.102;endf-b8.1:Fe56:600:16;jeff-4.0:Li6:294:1`.
 
 ## Browser support
 
