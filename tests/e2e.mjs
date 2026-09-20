@@ -131,6 +131,22 @@ await page.click('#y-scale');
 p = await plot();
 step('the Y toggle switches to linear', p.ytype === 'linear');
 
+// Sorting cycles ascending, descending, unsorted.
+const sortIcon = () => page.evaluate(() => document.querySelector('th[data-column=mt] i').className);
+await page.fill('.filter-input[data-column=mt]', '');
+await page.waitForFunction(() => document.querySelectorAll('#rows tr[data-row]').length > 1, null, { timeout: 15000 });
+const firstMt = () => page.evaluate(() => document.querySelector('#rows tr[data-row] td:nth-child(5)').textContent);
+const unsortedFirst = await firstMt();
+await page.click('th[data-column=mt]');
+const asc = await sortIcon(); const ascFirst = await firstMt();
+await page.click('th[data-column=mt]');
+const desc = await sortIcon(); const descFirst = await firstMt();
+await page.click('th[data-column=mt]');
+const back = await sortIcon();
+step('a heading cycles ascending, descending, unsorted', asc.includes('fa-sort-up') && desc.includes('fa-sort-down') && back.endsWith('fa-sort') && Number(descFirst) > Number(ascFirst) && (await firstMt()) === unsortedFirst, `${asc} / ${desc} / ${back}, first MT ${ascFirst} / ${descFirst} / ${unsortedFirst}`);
+await page.fill('.filter-input[data-column=mt]', '301');
+await waitForRow('heating 301');
+
 const x0eV = p.x0;
 await page.click('#x-unit');
 p = await plot();

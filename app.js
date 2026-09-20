@@ -418,11 +418,14 @@ function buildControls() {
     input.addEventListener('input', () => { clearTimeout(filterTimer); filterTimer = setTimeout(applyFilters, 120); });
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(filterTimer); applyFilters(); } });
   }
+  // A heading cycles ascending, descending, then back to the unsorted order
+  // (nuclide order, both arrows shown).
   for (const th of document.querySelectorAll('th.sortable')) {
     th.addEventListener('click', () => {
       const column = th.dataset.column;
-      if (state.sort.column === column) state.sort.descending = !state.sort.descending;
-      else state.sort = { column, descending: false };
+      if (state.sort.column !== column) state.sort = { column, descending: false };
+      else if (!state.sort.descending) state.sort.descending = true;
+      else state.sort = { column: null, descending: false };
       renderTable();
     });
   }
