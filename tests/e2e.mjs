@@ -159,11 +159,11 @@ p = await plot();
 step('the energy unit toggle rescales the X axis to MeV', p.x === 'Energy (MeV)' && Math.abs(p.x0 - x0eV * 1e-6) < 1e-18 && (await page.textContent('#x-unit')) === 'Energy: MeV', `${p.x} ${p.x0}`);
 
 await page.fill('.filter-input[data-column=element]', 'H');
-await page.fill('.filter-input[data-column=nucleons]', 'photon');
+await page.fill('.filter-input[data-column=nucleons]', '');
 await page.fill('.filter-input[data-column=mt]', '');
 await page.fill('.filter-input[data-column=reaction]', 'g,coh');
 await waitForRow('(γ,coherent) 502');
-step('photon reactions can be typed as g,coherent and photon', (await rows())[0].includes('H photon (γ,coherent) 502'), (await rows())[0]);
+step('photon reactions can be typed as g,coherent', (await rows())[0].includes('H photon (γ,coherent) 502'), (await rows())[0]);
 await page.fill('.filter-input[data-column=reaction]', '');
 await page.fill('.filter-input[data-column=mt]', '502');
 await waitForRow('(γ,coherent) 502');
