@@ -69,6 +69,14 @@ await page.waitForFunction(() => document.getElementById('busy').classList.conta
 const counter = await page.textContent('#counter');
 step('table lists Li6, Li7 and photon H', /· \d+ reactions match/.test(counter), counter);
 
+// The library filter is a dropdown of checkboxes; the hash enabled one library.
+step('the library filter names the one enabled library', (await page.textContent('#library-filter')) === 'ENDF/B-VIII.1', await page.textContent('#library-filter'));
+await page.click('#library-filter');
+const menu = await page.evaluate(() => ({ open: !document.getElementById('library-menu').classList.contains('d-none'), boxes: [...document.querySelectorAll('#library-menu input')].map((b) => `${b.value}${b.checked ? '*' : ''}`) }));
+step('the dropdown lists all six libraries with ENDF/B-VIII.1 ticked', menu.open && menu.boxes.length === 6 && menu.boxes.filter((b) => b.endsWith('*')).join() === 'endf-b8.1*', JSON.stringify(menu));
+await page.keyboard.press('Escape');
+step('Escape closes the dropdown', await page.evaluate(() => document.getElementById('library-menu').classList.contains('d-none')));
+
 await page.fill('.filter-input[data-column=element]', 'Li');
 await page.fill('.filter-input[data-column=nucleons]', '6');
 await page.fill('.filter-input[data-column=mt]', '105');

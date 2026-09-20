@@ -320,23 +320,49 @@ function applyUrl() {
 
 // --- controls -----------------------------------------------------------------------
 
+/// What the library dropdown's button reads.
+function libraryFilterLabel() {
+  const n = state.libraries.size;
+  if (n === LIBRARIES.length) return 'All libraries';
+  if (n === 1) return libraryLabel([...state.libraries][0]);
+  return `${n} of ${LIBRARIES.length} libraries`;
+}
+
 function renderControls() {
-  for (const box of document.querySelectorAll('#libraries input')) box.checked = state.libraries.has(box.value);
+  for (const box of document.querySelectorAll('#library-menu input')) box.checked = state.libraries.has(box.value);
+  $('library-filter').textContent = libraryFilterLabel();
   $('x-scale').textContent = state.xLog ? 'X: log' : 'X: linear';
   $('y-scale').textContent = state.yLog ? 'Y: log' : 'Y: linear';
   $('x-unit').textContent = `Energy: ${state.energyUnit}`;
 }
 
 function buildControls() {
-  $('libraries').innerHTML = LIBRARIES.map((l) => `<div class="form-check form-check-inline">
+  // The library filter: a dropdown of checkboxes in the column header. It
+  // decides which libraries are listed and fetched, so it is the one control
+  // for libraries; ticking a library that has not been loaded loads it.
+  const menu = $('library-menu');
+  const button = $('library-filter');
+  menu.innerHTML = LIBRARIES.map((l) => `<div class="form-check">
       <input class="form-check-input" type="checkbox" id="lib-${l.id}" value="${l.id}">
       <label class="form-check-label" for="lib-${l.id}">${l.label}</label></div>`).join('');
-
-  $('libraries').addEventListener('change', (e) => {
+  const openMenu = () => {
+    const r = button.getBoundingClientRect();
+    menu.style.top = `${r.bottom + 4}px`;
+    menu.style.left = `${r.left}px`;
+    menu.classList.remove('d-none');
+    button.setAttribute('aria-expanded', 'true');
+  };
+  const closeMenu = () => { menu.classList.add('d-none'); button.setAttribute('aria-expanded', 'false'); };
+  button.addEventListener('click', (e) => { e.stopPropagation(); if (menu.classList.contains('d-none')) openMenu(); else closeMenu(); });
+  document.addEventListener('click', (e) => { if (!menu.contains(e.target) && e.target !== button) closeMenu(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+  window.addEventListener('scroll', closeMenu, true);
+  menu.addEventListener('change', (e) => {
     if (!e.target.matches('input')) return;
     if (e.target.checked) state.libraries.add(e.target.value); else state.libraries.delete(e.target.value);
     if (!state.libraries.size) { state.libraries.add(e.target.value); e.target.checked = true; return; }
     state.page = 0;
+    renderControls();
     loadEnabledLibraries();
     renderTable();
     syncUrl();

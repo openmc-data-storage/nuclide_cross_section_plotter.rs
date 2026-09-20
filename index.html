@@ -19,15 +19,6 @@
     <h1 class="text-center mb-1">Nuclide Cross Section Plotter</h1>
     <p class="subtitle text-center mb-3">A searchable database of neutron and photon cross sections with interactive plotting by Jon Shimwell. See my other projects on <a href="https://xsplot.com/" target="_blank" rel="noopener">xsplot.com</a></p>
 
-    <div class="card bg-dark bg-opacity-50 border-0 mb-3">
-        <div class="card-body py-2">
-            <div class="d-flex flex-wrap align-items-center check-row">
-                <span class="me-3 fw-semibold">Libraries</span>
-                <div id="libraries" class="d-flex flex-wrap"></div>
-            </div>
-        </div>
-    </div>
-
     <div class="table-responsive">
         <table class="table table-dark table-hover align-middle mb-2" id="reactions">
             <thead>
@@ -46,7 +37,10 @@
                 <th><input class="form-control form-control-sm filter-input" data-column="nucleons" placeholder="e.g. 56" aria-label="filter nucleons"></th>
                 <th><input class="form-control form-control-sm filter-input" data-column="reaction" placeholder="e.g. (n,2n)" aria-label="filter reaction"></th>
                 <th><input class="form-control form-control-sm filter-input" data-column="mt" placeholder="e.g. 16" aria-label="filter MT"></th>
-                <th><input class="form-control form-control-sm filter-input" data-column="library" placeholder="e.g. JEFF" aria-label="filter library"></th>
+                <th>
+                    <button id="library-filter" class="form-select form-select-sm text-start library-filter" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="library-menu">All libraries</button>
+                    <div id="library-menu" class="library-menu d-none" role="group" aria-label="libraries to show"></div>
+                </th>
                 <th><input class="form-control form-control-sm filter-input" data-column="temperature" placeholder="K, blank for all" aria-label="filter temperature"></th>
             </tr>
             </thead>

@@ -28,6 +28,34 @@ h1 {
   min-width: 6rem;
 }
 
+/* The library filter is a dropdown of checkboxes. The menu is fixed to the
+   viewport so the scrolling table wrapper cannot clip it. */
+.library-filter {
+  min-width: 9rem;
+  cursor: pointer;
+}
+
+.library-menu {
+  position: fixed;
+  z-index: 1050;
+  min-width: 12rem;
+  padding: 0.4rem 0.6rem;
+  background: #212529;
+  border: 1px solid #495057;
+  border-radius: 0.375rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
+}
+
+.library-menu .form-check {
+  margin: 0.15rem 0;
+}
+
+.library-menu .form-check-label {
+  cursor: pointer;
+  font-weight: normal;
+  white-space: nowrap;
+}
+
 th.sortable {
   cursor: pointer;
   user-select: none;
