@@ -7,8 +7,10 @@ The source of the Nuclide Cross Section Plotter hosted on [xsplot.com](https://x
 Search every published neutron and photon reaction across six nuclear data
 libraries and temperatures, compare libraries and temperatures on one plot,
 and download the data. Each table row is one nuclide, reaction, library and
-temperature; the Temperature filter starts at 294 K and clearing it lists
-every published temperature. The page is a static site
+temperature. The Library and Temperature columns are filtered with dropdowns
+of checkboxes; the temperature dropdown lists all seven published
+temperatures (250, 294, 600, 900, 1200 and 2500 K, plus 0 K for elastic
+scattering only) and starts with 294 K ticked. The page is a static site
 with no build step: plain JavaScript modules, Bootstrap and Plotly.
 
 ## Where the data comes from

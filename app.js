@@ -13,16 +13,19 @@ import { seriesToJson, seriesToCsv, downloadText } from './download.js';
 import { ATOMIC_SYMBOL, nucleonsLabel, parseNuclide } from './elements.js';
 
 const PAGE_SIZE = 10;
-/// What the temperature filter box starts with, so the table opens at room
-/// temperature rather than seven rows per reaction.
-const DEFAULT_TEMPERATURE_FILTER = '294';
+/// Every temperature the libraries publish, in the order the dropdown lists
+/// them. The table opens with 294 K ticked so a reaction is one row, not seven.
+const TEMPERATURES = ['250K', '294K', '600K', '900K', '1200K', '2500K', '0K'];
+const temperatureText = (t) => (t === '0K' ? '0 K (elastic only)' : t.replace(/K$/, ' K'));
 const $ = (id) => document.getElementById(id);
 
 // --- state ------------------------------------------------------------------
 
 const state = {
   ...decodeState(location.hash),
-  filters: { temperature: DEFAULT_TEMPERATURE_FILTER },
+  filters: {},
+  /// Temperatures listed in the table (the Temperature column's dropdown).
+  temperatureFilter: new Set(['294K']),
   sort: { column: null, descending: false },
   page: 0,
 };
@@ -166,7 +169,13 @@ function renderTable() {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center text-secondary">Loading the reaction list...</td></tr>';
     return;
   }
-  filtered = filterRows(merged, dictionaries, state.filters, enabledLibs());
+  // The dropdown's labels mapped onto the store's temperature bits.
+  let mask = 0;
+  for (const t of state.temperatureFilter) {
+    const bit = merged.temperatures.indexOf(t);
+    if (bit >= 0) mask |= 1 << bit;
+  }
+  filtered = filterRows(merged, dictionaries, state.filters, enabledLibs(), mask);
   if (state.sort.column) filtered = sortRows(filtered, merged, dictionaries, state.sort.column, state.sort.descending);
   const page = paginate(filtered, state.page, PAGE_SIZE);
   state.page = page.page;
@@ -320,31 +329,34 @@ function applyUrl() {
 
 // --- controls -----------------------------------------------------------------------
 
-/// What the library dropdown's button reads.
-function libraryFilterLabel() {
-  const n = state.libraries.size;
-  if (n === LIBRARIES.length) return 'All libraries';
-  if (n === 1) return libraryLabel([...state.libraries][0]);
-  return `${n} of ${LIBRARIES.length} libraries`;
+/// What a checkbox dropdown's button reads: everything, the one choice, or a count.
+function checkFilterLabel(selected, all, noun, labelOf) {
+  if (selected.size === all.length) return `All ${noun}s`;
+  if (selected.size === 1) return labelOf([...selected][0]);
+  return `${selected.size} of ${all.length} ${noun}s`;
 }
 
 function renderControls() {
   for (const box of document.querySelectorAll('#library-menu input')) box.checked = state.libraries.has(box.value);
-  $('library-filter').textContent = libraryFilterLabel();
+  $('library-filter').textContent = checkFilterLabel(state.libraries, LIBRARIES, 'library', libraryLabel).replace(/librarys$/, 'libraries');
+  for (const box of document.querySelectorAll('#temperature-menu input')) box.checked = state.temperatureFilter.has(box.value);
+  $('temperature-filter').textContent = checkFilterLabel(state.temperatureFilter, TEMPERATURES, 'temperature', temperatureText);
   $('x-scale').textContent = state.xLog ? 'X: log' : 'X: linear';
   $('y-scale').textContent = state.yLog ? 'Y: log' : 'Y: linear';
   $('x-unit').textContent = `Energy: ${state.energyUnit}`;
 }
 
-function buildControls() {
-  // The library filter: a dropdown of checkboxes in the column header. It
-  // decides which libraries are listed and fetched, so it is the one control
-  // for libraries; ticking a library that has not been loaded loads it.
-  const menu = $('library-menu');
-  const button = $('library-filter');
-  menu.innerHTML = LIBRARIES.map((l) => `<div class="form-check">
-      <input class="form-check-input" type="checkbox" id="lib-${l.id}" value="${l.id}">
-      <label class="form-check-label" for="lib-${l.id}">${l.label}</label></div>`).join('');
+/// A column filter that is a dropdown of checkboxes: `options` are
+/// {value, label}, `selected` the Set it edits, `onChange` runs after a tick.
+/// At least one option stays ticked. The menu is fixed to the viewport so the
+/// table wrapper cannot clip it, and closes on an outside click, Escape or
+/// scroll.
+function checkboxDropdown(buttonId, menuId, prefix, options, selected, onChange) {
+  const menu = $(menuId);
+  const button = $(buttonId);
+  menu.innerHTML = options.map((o) => `<div class="form-check">
+      <input class="form-check-input" type="checkbox" id="${prefix}-${o.value}" value="${o.value}">
+      <label class="form-check-label" for="${prefix}-${o.value}">${o.label}</label></div>`).join('');
   const openMenu = () => {
     const r = button.getBoundingClientRect();
     menu.style.top = `${r.bottom + 4}px`;
@@ -359,14 +371,31 @@ function buildControls() {
   window.addEventListener('scroll', closeMenu, true);
   menu.addEventListener('change', (e) => {
     if (!e.target.matches('input')) return;
-    if (e.target.checked) state.libraries.add(e.target.value); else state.libraries.delete(e.target.value);
-    if (!state.libraries.size) { state.libraries.add(e.target.value); e.target.checked = true; return; }
-    state.page = 0;
-    renderControls();
-    loadEnabledLibraries();
-    renderTable();
-    syncUrl();
+    if (e.target.checked) selected.add(e.target.value); else selected.delete(e.target.value);
+    if (!selected.size) { selected.add(e.target.value); e.target.checked = true; return; }
+    onChange();
   });
+}
+
+function buildControls() {
+  // The library dropdown decides which libraries are listed and fetched, so it
+  // is the one control for libraries; ticking an unloaded library loads it.
+  checkboxDropdown('library-filter', 'library-menu', 'lib',
+    LIBRARIES.map((l) => ({ value: l.id, label: l.label })), state.libraries, () => {
+      state.page = 0;
+      renderControls();
+      loadEnabledLibraries();
+      renderTable();
+      syncUrl();
+    });
+  // The temperature dropdown lists every published temperature so the choice
+  // is visible; 294 K starts ticked.
+  checkboxDropdown('temperature-filter', 'temperature-menu', 'temp',
+    TEMPERATURES.map((t) => ({ value: t, label: temperatureText(t) })), state.temperatureFilter, () => {
+      state.page = 0;
+      renderControls();
+      renderTable();
+    });
 
   // One debounce for all five boxes, reading every box when it fires: a
   // per-box timer would let a quick tab-and-type across columns cancel the

@@ -38,10 +38,13 @@
                 <th><input class="form-control form-control-sm filter-input" data-column="reaction" placeholder="e.g. (n,2n)" aria-label="filter reaction"></th>
                 <th><input class="form-control form-control-sm filter-input" data-column="mt" placeholder="e.g. 16" aria-label="filter MT"></th>
                 <th>
-                    <button id="library-filter" class="form-select form-select-sm text-start library-filter" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="library-menu">All libraries</button>
-                    <div id="library-menu" class="library-menu d-none" role="group" aria-label="libraries to show"></div>
+                    <button id="library-filter" class="form-select form-select-sm text-start check-filter" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="library-menu">All libraries</button>
+                    <div id="library-menu" class="check-menu d-none" role="group" aria-label="libraries to show"></div>
                 </th>
-                <th><input class="form-control form-control-sm filter-input" data-column="temperature" placeholder="K, blank for all" aria-label="filter temperature"></th>
+                <th>
+                    <button id="temperature-filter" class="form-select form-select-sm text-start check-filter" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="temperature-menu">294 K</button>
+                    <div id="temperature-menu" class="check-menu d-none" role="group" aria-label="temperatures to show"></div>
+                </th>
             </tr>
             </thead>
             <tbody id="rows"></tbody>

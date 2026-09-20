@@ -88,19 +88,25 @@ await page.waitForFunction(() => document.getElementById('plot')?.data?.length =
 let p = await plot();
 step('ticking a row draws it at 294 K', p.names[0] === 'Li6 (n,t) ENDF/B-VIII.1 294 K' && p.lengths[0] > 100, JSON.stringify(p.names));
 
-// The same reaction at another temperature is another row.
-await page.fill('.filter-input[data-column=temperature]', '2500');
-await waitForRow('(n,t) 105 ENDF/B-VIII.1 2500 K');
-await page.check('#rows tr[data-row] .row-select');
+// The temperature dropdown lists every published temperature, 294 K ticked.
+step('the temperature filter starts at 294 K', (await page.textContent('#temperature-filter')) === '294 K', await page.textContent('#temperature-filter'));
+await page.click('#temperature-filter');
+const tmenu = await page.evaluate(() => [...document.querySelectorAll('#temperature-menu label')].map((l) => l.textContent));
+step('the dropdown lists all seven temperatures', tmenu.join(',') === '250 K,294 K,600 K,900 K,1200 K,2500 K,0 K (elastic only)', tmenu.join(','));
+// Ticking 2500 K as well lists the reaction at both temperatures; the new row is another tick.
+await page.click('#temp-2500K');
+await page.waitForFunction(() => document.querySelectorAll('#rows tr[data-row]').length === 2, null, { timeout: 15000 });
+step('ticking 2500 K adds its row', (await rows())[1] === 'Li 6 (n,t) 105 ENDF/B-VIII.1 2500 K' && (await page.textContent('#temperature-filter')) === '2 of 7 temperatures', (await rows()).join(' | '));
+await page.keyboard.press('Escape');
+await page.check('#rows tr[data-row]:nth-child(2) .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 2, null, { timeout: 60000 });
 p = await plot();
 step('ticking the 2500 K row adds a trace', p.names[1] === 'Li6 (n,t) ENDF/B-VIII.1 2500 K', JSON.stringify(p.names));
-
-// Clearing the temperature filter lists every temperature of the reaction.
-await page.fill('.filter-input[data-column=temperature]', '');
-await page.waitForFunction(() => document.querySelectorAll('#rows tr[data-row]').length === 6, null, { timeout: 15000 });
-step('a blank temperature filter lists all six temperatures', (await rows()).map((r) => r.split(' ').slice(-2).join(' ')).join(',') === '250 K,294 K,600 K,900 K,1200 K,2500 K', (await rows()).join(' | '));
-await page.fill('.filter-input[data-column=temperature]', '294');
+// Back to 294 K only for the rest.
+await page.click('#temperature-filter');
+await page.click('#temp-2500K');
+await page.keyboard.press('Escape');
+await waitForRow('(n,t) 105 ENDF/B-VIII.1 294 K');
 
 await page.fill('.filter-input[data-column=mt]', '301');
 await waitForRow('heating 301');

@@ -28,14 +28,14 @@ h1 {
   min-width: 6rem;
 }
 
-/* The library filter is a dropdown of checkboxes. The menu is fixed to the
-   viewport so the scrolling table wrapper cannot clip it. */
-.library-filter {
+/* The library and temperature filters are dropdowns of checkboxes. The menu is
+   fixed to the viewport so the scrolling table wrapper cannot clip it. */
+.check-filter {
   min-width: 9rem;
   cursor: pointer;
 }
 
-.library-menu {
+.check-menu {
   position: fixed;
   z-index: 1050;
   min-width: 12rem;
@@ -46,11 +46,11 @@ h1 {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.5);
 }
 
-.library-menu .form-check {
+.check-menu .form-check {
   margin: 0.15rem 0;
 }
 
-.library-menu .form-check-label {
+.check-menu .form-check-label {
   cursor: pointer;
   font-weight: normal;
   white-space: nowrap;

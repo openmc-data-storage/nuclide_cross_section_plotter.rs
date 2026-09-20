@@ -113,8 +113,10 @@ export function allowedKeys(dictionary, term) {
 /// `terms` maps column name to the text typed (empty or missing means no
 /// filter). `enabledLibs` is a Uint8Array over LIBRARIES. Each store entry
 /// becomes one row per temperature it publishes that the temperature filter
-/// admits; a photon entry becomes one row with no temperature.
-export function filterRows(store, dictionaries, terms, enabledLibs) {
+/// admits; a photon entry becomes one row with no temperature. The
+/// temperature filter is `temperatureMask` (bits over `store.temperatures`)
+/// when given, else the text in `terms.temperature`.
+export function filterRows(store, dictionaries, terms, enabledLibs, temperatureMask = null) {
   const { dict } = dictionaries;
   const allow = {};
   for (const col of COLUMNS) {
@@ -127,7 +129,9 @@ export function filterRows(store, dictionaries, terms, enabledLibs) {
   }
   // The temperature filter as a bit mask over the store's temperature list.
   let tempMask = 0xff;
-  if (allow.temperature) {
+  if (temperatureMask !== null) {
+    tempMask = temperatureMask;
+  } else if (allow.temperature) {
     tempMask = 0;
     for (let b = 0; b < NO_TEMPERATURE; b++) if (allow.temperature[b]) tempMask |= 1 << b;
   }
