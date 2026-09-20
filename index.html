@@ -8,11 +8,78 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
-    <base data-trunk-public-url/>
-    <link data-trunk rel="rust"/>
-    <link data-trunk rel="scss" href="index.scss"/>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
     <script data-goatcounter="https://nuclide-cross-section-plotter.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
+    <script type="module" src="./app.js"></script>
 </head>
+<body>
+<main class="container-xxl py-3">
+    <h1 class="text-center mb-1">Nuclide Cross Section Plotter</h1>
+    <p class="subtitle text-center mb-3">A searchable database of neutron and photon cross sections with interactive plotting by Jon Shimwell. See my other projects on <a href="https://xsplot.com/" target="_blank" rel="noopener">xsplot.com</a></p>
+
+    <div class="row g-3">
+        <div class="col-lg-9">
+            <div class="card bg-dark bg-opacity-50 border-0 mb-3">
+                <div class="card-body py-2">
+                    <div class="d-flex flex-wrap align-items-center check-row mb-1">
+                        <span class="me-3 fw-semibold">Libraries</span>
+                        <div id="libraries" class="d-flex flex-wrap"></div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center check-row">
+                        <span class="me-3 fw-semibold">Temperatures</span>
+                        <div id="temperatures" class="d-flex flex-wrap"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-dark table-hover align-middle mb-2" id="reactions">
+                    <thead>
+                    <tr>
+                        <th scope="col">Select</th>
+                        <th scope="col" class="sortable" data-column="element">Element <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col" class="sortable" data-column="nucleons">Nucleons <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col" class="sortable" data-column="reaction">Reaction <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col" class="sortable" data-column="mt">MT <i class="fa-solid fa-sort"></i></th>
+                        <th scope="col" class="sortable" data-column="library">Library <i class="fa-solid fa-sort"></i></th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th><input class="form-control form-control-sm filter-input" data-column="element" placeholder="e.g. Fe" aria-label="filter element"></th>
+                        <th><input class="form-control form-control-sm filter-input" data-column="nucleons" placeholder="e.g. 56" aria-label="filter nucleons"></th>
+                        <th><input class="form-control form-control-sm filter-input" data-column="reaction" placeholder="e.g. (n,2n)" aria-label="filter reaction"></th>
+                        <th><input class="form-control form-control-sm filter-input" data-column="mt" placeholder="e.g. 16" aria-label="filter MT"></th>
+                        <th><input class="form-control form-control-sm filter-input" data-column="library" placeholder="e.g. JEFF" aria-label="filter library"></th>
+                    </tr>
+                    </thead>
+                    <tbody id="rows"></tbody>
+                </table>
+            </div>
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <nav aria-label="reaction pages"><ul id="pagination" class="pagination pagination-sm mb-0"></ul></nav>
+                <span id="counter" class="mono">0 selected</span>
+            </div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="d-grid gap-2">
+                <button id="clear" class="btn btn-outline-light" type="button">Clear plot</button>
+                <button id="x-scale" class="btn btn-outline-light" type="button" title="Toggle the energy axis between log and linear">X: log</button>
+                <button id="y-scale" class="btn btn-outline-light" type="button" title="Toggle the cross section axis between log and linear">Y: log</button>
+                <button id="download-json" class="btn btn-primary" type="button" disabled>Download JSON</button>
+                <button id="download-csv" class="btn btn-primary" type="button" disabled>Download CSV</button>
+            </div>
+            <div id="busy" class="d-none mt-3 text-center" role="status">
+                <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span><span id="busy-text">Loading...</span>
+            </div>
+            <div id="notice" class="d-none alert alert-secondary py-2 mt-3 small"></div>
+            <div id="error" class="d-none alert alert-danger py-2 mt-3 small" role="alert"></div>
+        </div>
+    </div>
+
+    <div id="plot" class="mt-3 rounded"></div>
+</main>
+</body>
 </html>

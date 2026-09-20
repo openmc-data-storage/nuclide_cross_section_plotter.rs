@@ -1,0 +1,63 @@
+/* xsplot.com: a dark Bootstrap page with the gradient it has always had. */
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(to bottom right, #444444, #009a5b) fixed;
+  font-size: 1rem;
+}
+
+main {
+  color: #fff6d5;
+}
+
+main a {
+  color: #ffe9a8;
+}
+
+h1 {
+  font-size: 1.9rem;
+}
+
+.subtitle {
+  color: #e6e0cc;
+  font-style: italic;
+}
+
+/* Filter boxes sit in the header row of the table, one per column. */
+.filter-input {
+  min-width: 6rem;
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+th.sortable .fa-solid {
+  margin-left: 0.3rem;
+  opacity: 0.6;
+}
+
+.form-check-input.row-select {
+  width: 1.4rem;
+  height: 1.4rem;
+  cursor: pointer;
+}
+
+#plot {
+  width: 100%;
+  height: 620px;
+}
+
+#error {
+  white-space: pre-wrap;
+}
+
+.check-row .form-check {
+  margin-right: 1rem;
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}

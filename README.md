@@ -1,19 +1,69 @@
-This repository hosts the source code for the Nuclide Cross Section Plotter hosted on [xsplot.com](https://xsplot.com)
+# Nuclide cross section plotter
 
-[Direct link to the webapp](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/index.html)
+The source of the Nuclide Cross Section Plotter hosted on [xsplot.com](https://xsplot.com).
 
-The web app allows users to search a database of neutron cross sections, filter the results, plot graphs and download the data.
+[Direct link to the web app](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/index.html)
 
-You can install the dependencies and build the web app locally with these instructions that have been tested on Ubuntu 22.04
+Search every published neutron and photon reaction across six nuclear data
+libraries, plot them at any of the published temperatures, compare libraries
+and temperatures on one plot, and download the data. The page is a static site
+with no build step: plain JavaScript modules, Bootstrap and Plotly.
+
+## Where the data comes from
+
+The cross sections are the Arrow files published at
+`https://yamc-data.xsplot.com/<library>/<particle>/<Name>.arrow/`, the same
+files the [yamc](https://github.com/fusion-neutronics/yamc) Monte Carlo code
+reads. Each library also publishes an `index.json` per particle listing every
+nuclide, reaction and temperature, which is what the table is built from.
+
+Nothing is downloaded until a reaction is ticked. Each nuclide's `version.json`
+carries the byte range of every record batch, and the reactions file is written
+one batch per reaction and temperature, so plotting one cross section is one
+small HTTP range request plus the energy grid of that temperature. The pieces
+are spliced into an Arrow IPC stream and decoded in a Web Worker with
+apache-arrow and an LZ4 codec (every published batch is LZ4-frame compressed).
+
+Libraries: ENDF/B-VIII.1, JEFF-4.0, JENDL-5.0, TENDL-2025, TENDL-2017 and
+FENDL-3.2d. Temperatures: 250, 294, 600, 900, 1200 and 2500 K, plus the
+unbroadened 0 K grid where only elastic scattering is published. Photon
+cross sections (coherent, incoherent, photoelectric and pair production) are
+per element and have no temperature.
+
+## Files
+
+- `index.html`, `style.css`, `app.js`: the page and its controller
+- `worker.js`: Web Worker that fetches and decodes; `deps.browser.js` names the CDN builds it uses
+- `engine.js`: fetch planning, byte-range splicing and caching; `arrow.js`: Arrow decoding
+- `index_loader.js`, `table.js`: the reaction table (typed-array store, filters, sort, pages)
+- `plot.js`, `url_state.js`, `download.js`: the figure, the shareable URL hash, JSON and CSV export
+- `ranges.js`, `libraries.js`, `mt_names.js`: shared with [materials_for_mc_online](https://github.com/shimwell/materials_for_mc_online)
+- `elements.js`, `photon.js`: element symbols and photon reaction names
+- `tests/`: Node unit tests and a Playwright end-to-end run against fixture data
+
+## Running locally
+
 ```bash
-sudo apt-get update
-sudo apt-get install curl
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-. "$HOME/.cargo/env"
-sudo apt install build-essential -y
-rustup target add wasm32-unknown-unknown
-cargo clean
-cargo build --target wasm32-unknown-unknown --release
-cargo install --locked trunk
-trunk serve --open
+python3 -m http.server 8000
 ```
+
+then open [http://localhost:8000](http://localhost:8000). The page fetches
+its data from the network.
+
+## Tests
+
+```bash
+npm ci
+npm test                 # unit tests against the fixtures in tests/fixtures
+npx playwright install chromium
+python3 -m http.server 8000 &
+node tests/e2e.mjs       # drives the page in headless Chromium
+```
+
+The sharing URL keeps the enabled libraries, temperatures, selected reactions
+and axis scales in the hash, for example
+`#l=endf-b8.1,jeff-4.0&t=294,600&s=endf-b8.1:Fe56:16.102;jeff-4.0:Li6:1`.
+
+## Browser support
+
+The page uses a module Web Worker: Chrome and Edge 80+, Firefox 114+, Safari 15+.
