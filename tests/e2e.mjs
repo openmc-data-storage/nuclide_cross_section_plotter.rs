@@ -85,9 +85,11 @@ await page.fill('.filter-input[data-column=nucleons]', '6');
 await page.fill('.filter-input[data-column=mt]', '105');
 await waitForRow('(n,t) 105');
 step('filters narrow to one row at 294 K', (await rows())[0] === 'Li 6 (n,t) 105 ENDF/B-VIII.1 294 K', (await rows())[0]);
+step('the row checkbox says what ticking it does', (await page.getAttribute('#rows tr[data-row] .row-select', 'title')) === 'Add Li6 (n,t) ENDF/B-VIII.1 294 K to the plot', await page.getAttribute('#rows tr[data-row] .row-select', 'title'));
 
 await page.check('#rows tr[data-row] .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 1, null, { timeout: 60000 });
+step('a ticked checkbox offers to remove the series', (await page.getAttribute('#rows tr[data-row] .row-select', 'title')) === 'Remove Li6 (n,t) ENDF/B-VIII.1 294 K from the plot');
 let p = await plot();
 step('ticking a row draws it at 294 K', p.names[0] === 'Li6 (n,t) ENDF/B-VIII.1 294 K' && p.lengths[0] > 100, JSON.stringify(p.names));
 step('the legend shows for a single trace', await page.evaluate(() => document.getElementById('plot').layout.showlegend === true && !!document.querySelector('#plot .legend .traces')));

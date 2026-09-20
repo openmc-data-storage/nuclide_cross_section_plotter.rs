@@ -185,10 +185,13 @@ function renderTable() {
     const i = rowIndex(packed);
     const bit = rowBit(packed);
     const id = rowId(merged, packed);
-    const checked = state.selection.has(id) ? ' checked' : '';
+    const selected = state.selection.has(id);
+    const checked = selected ? ' checked' : '';
     const photon = merged.kind[i] === KIND_PHOTON;
+    const name = seriesName(factsOfRow(i, bit));
+    const hint = selected ? `Remove ${name} from the plot` : `Add ${name} to the plot`;
     html.push(`<tr data-row="${packed}">
-      <td><input class="form-check-input row-select" type="checkbox" data-id="${id}"${checked} aria-label="select ${id}"></td>
+      <td><input class="form-check-input row-select" type="checkbox" data-id="${id}"${checked} title="${hint}" aria-label="${hint}"></td>
       <td>${ATOMIC_SYMBOL[merged.z[i]]}</td>
       <td class="mono">${photon ? '<span class="text-secondary">photon</span>' : nucleonsLabel(merged.a[i], merged.meta[i])}</td>
       <td>${reactionName(merged.mt[i], merged.kind[i])}</td>
@@ -428,6 +431,9 @@ function buildControls() {
     const id = e.target.dataset.id;
     const packed = Number(e.target.closest('tr').dataset.row);
     if (e.target.checked) { state.selection.add(id); rowFacts.set(id, factsOfRow(rowIndex(packed), rowBit(packed))); } else state.selection.delete(id);
+    const name = seriesName(factsOfRow(rowIndex(packed), rowBit(packed)));
+    e.target.title = e.target.checked ? `Remove ${name} from the plot` : `Add ${name} to the plot`;
+    e.target.setAttribute('aria-label', e.target.title);
     $('counter').textContent = `${state.selection.size} selected · ${filtered.length.toLocaleString()} reactions match`;
     updatePlot();
     syncUrl();
