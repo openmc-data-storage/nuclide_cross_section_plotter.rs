@@ -8,11 +8,69 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
           integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script src="https://cdn.plot.ly/plotly-2.14.0.min.js"></script>
-    <base data-trunk-public-url/>
-    <link data-trunk rel="rust"/>
-    <link data-trunk rel="scss" href="index.scss"/>
+    <link rel="stylesheet" href="./style.css">
+    <script src="https://cdn.plot.ly/plotly-2.26.0.min.js"></script>
     <script data-goatcounter="https://nuclide-cross-section-plotter.goatcounter.com/count"
         async src="//gc.zgo.at/count.js"></script>
+    <script type="module" src="./app.js"></script>
 </head>
+<body>
+<main class="container-xxl py-3">
+    <h1 class="text-center mb-1">Nuclide Cross Section Plotter</h1>
+    <p class="subtitle text-center mb-1">A searchable database of neutron and photon cross sections with interactive plotting by Jon Shimwell. See my other projects on <a href="https://xsplot.com/" target="_blank" rel="noopener">xsplot.com</a></p>
+    <p class="subtitle text-center mb-3 examples">Example plots: <a href="#s=endf-b8.1:Li6:900:205;jeff-4.0:Li7:900:205;jendl-5.0:Be9:900:16;tendl-2025:Pb208:900:16;fendl-3.2d:Pb206:900:16;tendl-2017:Pb207:900:16;endf-b8.1:Pb204:900:16" title="Tritium production in Li6 and Li7 with the neutron multipliers Be9 and lead at 900 K, each from a different library">[1] tritium breeding</a> · <a href="#s=endf-b8.1:Fe56:294:16;jeff-4.0:Fe56:294:16;jendl-5.0:Fe56:294:16;tendl-2025:Fe56:294:16;tendl-2017:Fe56:294:16;fendl-3.2d:Fe56:294:16" title="Fe56 (n,2n) at 294 K from every library, to see where the evaluations differ">[2] one reaction, six libraries</a> · <a href="#s=endf-b8.1:U238:250:102;endf-b8.1:U238:294:102;endf-b8.1:U238:600:102;endf-b8.1:U238:900:102;endf-b8.1:U238:1200:102;endf-b8.1:U238:2500:102" title="U238 radiative capture at every published temperature; zoom in on the 6.67 eV resonance to see it broaden">[3] Doppler broadening</a> · <a href="#s=endf-b8.1:B10:294:107;endf-b8.1:Li6:294:105;endf-b8.1:He3:294:103;endf-b8.1:Gd157:294:102;endf-b8.1:Cd113:294:102;endf-b8.1:Xe135:294:102" title="The classic 1/v absorbers and detector reactions: B10 (n,α), Li6 (n,t), He3 (n,p), and capture in Gd157, Cd113 and Xe135">[4] neutron absorbers</a> · <a href="#s=endf-b8.1:U233:294:18;endf-b8.1:U235:294:18;endf-b8.1:Pu239:294:18;endf-b8.1:U238:294:18;endf-b8.1:Th232:294:18" title="Fissile U233, U235 and Pu239 against the threshold fission of U238 and Th232">[5] fission</a> · <a href="#s=endf-b8.1:Ni58:294:103;endf-b8.1:Al27:294:107;endf-b8.1:Fe56:294:103;endf-b8.1:Nb93:294:16;endf-b8.1:In115:294:4;endf-b8.1:Au197:294:102" title="Threshold and capture reactions used for neutron dosimetry: Ni58 (n,p), Al27 (n,α), Fe56 (n,p), Nb93 (n,2n), In115 (n,n') and Au197 (n,γ)">[6] activation foils</a> · <a href="#s=endf-b8.1:Pb::502.504.515.517.522" title="How a photon interacts with lead: coherent and incoherent scattering, the photoelectric effect and pair production">[7] photon interactions</a></p>
+
+    <div class="table-responsive">
+        <table class="table table-dark table-hover align-middle mb-2" id="reactions">
+            <thead>
+            <tr>
+                <th scope="col" title="Tick a row to add it to the plot. Ticked rows stay plotted while you change the filters; Clear plot unticks them all.">Select</th>
+                <th scope="col" class="sortable" data-column="element" title="Chemical symbol of the target: the nuclide for neutron data, the element for photon data. Click to sort alphabetically.">Element <i class="fa-solid fa-sort"></i></th>
+                <th scope="col" class="sortable" data-column="nucleons" title="Mass number of the target nuclide (protons plus neutrons). m1 marks a metastable state, e.g. 242 m1 is Am-242m. Photon data is per element and has none.">Nucleons <i class="fa-solid fa-sort"></i></th>
+                <th scope="col" class="sortable" data-column="reaction" title="The reaction channel in ENDF notation: (n,2n) is a neutron in and two neutrons out, (n,γ) is radiative capture, (n,total) the sum of all channels. (γ,…) are photon interactions.">Reaction <i class="fa-solid fa-sort"></i></th>
+                <th scope="col" class="sortable" data-column="mt" title="The ENDF MT number that identifies the reaction: 1 total, 2 elastic, 16 (n,2n), 102 (n,γ), 301 heating, 444 damage energy. 50 to 91 are inelastic scattering to individual levels.">MT <i class="fa-solid fa-sort"></i></th>
+                <th scope="col" class="sortable" data-column="library" title="The evaluated nuclear data library the cross section comes from. Use the dropdown to choose which libraries are listed; the same reaction from two libraries is two rows.">Library <i class="fa-solid fa-sort"></i></th>
+                <th scope="col" class="sortable" data-column="temperature" title="Temperature at which the cross section was Doppler broadened. 0 K is the unbroadened evaluation and is published for elastic scattering only. Photon cross sections have no temperature.">Temperature <i class="fa-solid fa-sort"></i></th>
+            </tr>
+            <tr>
+                <th></th>
+                <th><input class="form-control form-control-sm filter-input" data-column="element" placeholder="e.g. Fe" aria-label="filter element"></th>
+                <th><input class="form-control form-control-sm filter-input" data-column="nucleons" placeholder="e.g. 56" aria-label="filter nucleons"></th>
+                <th><input class="form-control form-control-sm filter-input" data-column="reaction" placeholder="e.g. (n,2n)" aria-label="filter reaction"></th>
+                <th><input class="form-control form-control-sm filter-input" data-column="mt" placeholder="e.g. 16" aria-label="filter MT"></th>
+                <th>
+                    <button id="library-filter" class="form-select form-select-sm text-start check-filter" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="library-menu">All libraries</button>
+                    <div id="library-menu" class="check-menu d-none" role="group" aria-label="libraries to show"></div>
+                </th>
+                <th>
+                    <button id="temperature-filter" class="form-select form-select-sm text-start check-filter" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="temperature-menu">294 K</button>
+                    <div id="temperature-menu" class="check-menu d-none" role="group" aria-label="temperatures to show"></div>
+                </th>
+            </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+        <nav aria-label="reaction pages"><ul id="pagination" class="pagination pagination-sm mb-0"></ul></nav>
+        <span id="counter" class="mono">0 selected</span>
+    </div>
+
+    <div class="d-flex flex-wrap align-items-center gap-2 toolbar">
+        <button id="clear" class="btn btn-outline-light" type="button">Clear plot</button>
+        <button id="x-scale" class="btn btn-outline-light" type="button" title="Toggle the energy axis between log and linear">X: log</button>
+        <button id="y-scale" class="btn btn-outline-light" type="button" title="Toggle the cross section axis between log and linear">Y: log</button>
+        <button id="x-unit" class="btn btn-outline-light" type="button" title="Show energies in eV or MeV (downloads are always in eV)">Energy: eV</button>
+        <button id="download-json" class="btn btn-primary" type="button" disabled>Download JSON</button>
+        <button id="download-csv" class="btn btn-primary" type="button" disabled>Download CSV</button>
+        <span id="busy" class="d-none ms-2" role="status">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span><span id="busy-text">Loading...</span>
+        </span>
+    </div>
+    <div id="notice" class="d-none alert alert-secondary py-2 mt-2 mb-0 small"></div>
+    <div id="error" class="d-none alert alert-danger py-2 mt-2 mb-0 small" role="alert"></div>
+
+    <div id="plot" class="mt-3 rounded"></div>
+</main>
+</body>
 </html>

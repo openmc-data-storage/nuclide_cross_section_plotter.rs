@@ -1,67 +1,62 @@
-# This GitHub actions was inspired from
-# https://www.reddit.com/r/rust/comments/10eiysf/comment/j4rmeum/?utm_source=share&utm_medium=web2x&context=3
+name: Test and deploy
 
-name: CD - Deploy Examples
-
-# Controls when the workflow will run
 on:
-  # Triggers the workflow on push or pull request events but only for the "master" branch
   push:
     branches: ["main"]
-
-  # Allows you to run this workflow manually from the Actions tab
+  pull_request:
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Restore cache
-        uses: actions/cache@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          path: |
-            ~/.cargo/bin
-            ~/.cargo/git
-            ~/.cargo/registry
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: install toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          target: wasm32-unknown-unknown
-      - name: Install Trunk
-        uses: jetli/trunk-action@v0.5.0
-        with:
-          # Optional version of trunk to install(eg. 'v0.16.0', 'latest')
-          version: "latest"
-      - name: Add wasm target
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests (decode, engine, index, table, URL state)
+        run: npm test
+      - name: Install Chromium for the end-to-end run
+        run: npx playwright install --with-deps chromium
+      - name: End-to-end against fixture data
         run: |
-          rustup target add wasm32-unknown-unknown
-      - name: Build the Rust WASM app and all of its assets
-        run: trunk build --public-url /${{ github.event.repository.name }} --release
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+          python3 -m http.server 8000 --bind 127.0.0.1 &
+          sleep 1
+          node tests/e2e.mjs
+          node tests/e2e.mjs --no-range
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          path: "./dist"
+          name: screenshots
+          path: tests/screenshots/
+          if-no-files-found: ignore
 
   deploy:
-    needs: build
+    # The site is the repository itself: no build step, so the checkout is the
+    # artifact. A fresh checkout has no node_modules.
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-
     permissions:
       pages: write
       id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: "."
+      - id: deployment
         uses: actions/deploy-pages@v4
