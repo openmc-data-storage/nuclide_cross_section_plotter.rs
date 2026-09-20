@@ -68,7 +68,7 @@ export function buildDictionaries(store) {
   }
   for (const z of seen.element) dict.element.set(z, ATOMIC_SYMBOL[z].toLowerCase());
   for (const k of seen.nucleons) dict.nucleons.set(k, nucleonsLabel(k >> 4, k & 15).replace(' ', '').toLowerCase());
-  for (const k of seen.reaction) dict.reaction.set(k, reactionName(k & 65535, k >= 65536 ? KIND_PHOTON : 0).toLowerCase());
+  for (const k of seen.reaction) dict.reaction.set(k, reactionText(reactionName(k & 65535, k >= 65536 ? KIND_PHOTON : 0)));
   for (const mt of seen.mt) dict.mt.set(mt, String(mt));
   for (const lib of seen.library) dict.library.set(lib, `${LIBRARIES[lib].label} ${LIBRARIES[lib].id}`.toLowerCase());
   // Temperature text is the bare Kelvin number, so "294" is an exact match and
@@ -93,6 +93,33 @@ function rankArray(orderedKeys, size) {
   const r = new Uint32Array(size);
   orderedKeys.forEach((k, i) => { r[k] = i + 1; });
   return r;
+}
+
+/// A reaction name as the filter sees it: lowercase, brackets dropped, so
+/// `(n,2n)` and `n,2n` are the same thing to type.
+export function reactionText(name) {
+  return name.toLowerCase().replace(/[()]/g, '');
+}
+
+/// The keys a reaction term admits. Brackets are ignored on both sides, and a
+/// lone `g` after the comma means gamma. Tiers, first non-empty wins: the
+/// whole name exactly (`n,2n`), the product exactly (`2n`, `p`, `total`), the
+/// whole name by prefix (`n,2`), the product by prefix (`2n` when no channel
+/// is exactly that). Exact before prefix keeps `p` at (n,p) rather than every
+/// proton channel.
+export function allowedReactionKeys(dictionary, term) {
+  let t = reactionText(term.trim());
+  if (!t) return [...dictionary.keys()];
+  t = t.replace(/(^|,)g$/, '$1gamma');
+  const tiers = [[], [], [], []];
+  for (const [key, text] of dictionary) {
+    const product = text.slice(text.indexOf(',') + 1);
+    if (text === t) tiers[0].push(key);
+    else if (product === t) tiers[1].push(key);
+    else if (text.startsWith(t)) tiers[2].push(key);
+    else if (product.startsWith(t)) tiers[3].push(key);
+  }
+  return tiers.find((tier) => tier.length) ?? [];
 }
 
 /// The keys a term admits in one column: exact match if any value equals the
@@ -124,7 +151,8 @@ export function filterRows(store, dictionaries, terms, enabledLibs, temperatureM
     if (!term || !term.trim()) continue;
     const size = col === 'element' ? 256 : col === 'nucleons' ? 65536 * 16 : col === 'reaction' ? 131072 : col === 'mt' ? 65536 : 8;
     const a = new Uint8Array(size);
-    for (const k of allowedKeys(dict[col], term)) a[k] = 1;
+    const keys = col === 'reaction' ? allowedReactionKeys(dict[col], term) : allowedKeys(dict[col], term);
+    for (const k of keys) a[k] = 1;
     allow[col] = a;
   }
   // The temperature filter as a bit mask over the store's temperature list.

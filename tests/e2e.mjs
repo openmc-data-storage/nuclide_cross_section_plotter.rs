@@ -82,6 +82,12 @@ step('Escape closes the dropdown', await page.evaluate(() => document.getElement
 
 await page.fill('.filter-input[data-column=element]', 'Li');
 await page.fill('.filter-input[data-column=nucleons]', '6');
+await page.fill('.filter-input[data-column=reaction]', 't');
+await waitForRow('(n,t) 105');
+step('typing the product alone finds the reaction', (await rows())[0].includes('(n,t) 105'), (await rows())[0]);
+await page.fill('.filter-input[data-column=reaction]', 'n,xt');
+await waitForRow('(n,Xt) 205');
+await page.fill('.filter-input[data-column=reaction]', '');
 await page.fill('.filter-input[data-column=mt]', '105');
 await waitForRow('(n,t) 105');
 step('filters narrow to one row at 294 K', (await rows())[0] === 'Li 6 (n,t) 105 ENDF/B-VIII.1 294 K', (await rows())[0]);

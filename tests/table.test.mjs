@@ -73,7 +73,14 @@ test('filters are exact when any value matches, else prefix, per column, ANDed',
   assert.deepEqual(names(at294({ nucleons: '242' })), ['Am242'], 'ground state exact');
   assert.deepEqual(names(at294({ nucleons: '242m' })), ['Am242_m1'], 'metastable by prefix');
   assert.deepEqual(mts(at294({ reaction: '(n,2n)' })), [16]);
+  assert.deepEqual(mts(at294({ reaction: 'n,2n' })), [16], 'brackets are optional');
+  assert.deepEqual(mts(at294({ reaction: '2n' })), [16], 'the product alone');
+  assert.deepEqual(mts(at294({ reaction: 'gamma' })), [102], 'exact product beats the photon prefix');
+  assert.deepEqual(mts(at294({ reaction: 'n,g' })), [102], 'g after the comma is gamma');
+  assert.deepEqual(mts(at294({ reaction: 'fission' })), [18]);
+  assert.deepEqual(mts(at294({ reaction: 'n,e' })), [2, 2, 2], 'prefix of the whole name: (n,elastic)');
   assert.deepEqual(mts(at294({ reaction: '(γ' })), [502, 502, 504, 522]);
+  assert.deepEqual(mts(at294({ reaction: 'γ,coh' })), [502, 502]);
   assert.deepEqual(names(at294({ library: 'jeff' })), ['Fe56']);
   assert.deepEqual(mts(at294({ element: 'Fe', library: 'endf', mt: '2' })), [2]);
   const onlyJeff = new Uint8Array(LIBRARIES.length); onlyJeff[LIBRARIES.findIndex((l) => l.id === 'jeff-4.0')] = 1;
