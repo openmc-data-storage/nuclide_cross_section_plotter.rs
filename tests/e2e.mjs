@@ -160,12 +160,17 @@ step('the energy unit toggle rescales the X axis to MeV', p.x === 'Energy (MeV)'
 
 await page.fill('.filter-input[data-column=element]', 'H');
 await page.fill('.filter-input[data-column=nucleons]', '');
+await page.fill('.filter-input[data-column=mt]', '');
+await page.fill('.filter-input[data-column=reaction]', 'g,coh');
+await waitForRow('(gamma,coherent) 502');
+step('photon reactions read and type as gamma, not a symbol', (await rows())[0].includes('H photon (gamma,coherent) 502') && !(await rows())[0].includes('γ'), (await rows())[0]);
+await page.fill('.filter-input[data-column=reaction]', '');
 await page.fill('.filter-input[data-column=mt]', '502');
-await waitForRow('(γ,coherent) 502');
+await waitForRow('(gamma,coherent) 502');
 await page.check('#rows tr[data-row] .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 4, null, { timeout: 60000 });
 p = await plot();
-step('a photon reaction plots without a temperature', p.names[3] === 'H (γ,coherent) ENDF/B-VIII.1' && (await rows())[0].endsWith('\u2014'), `${p.names[3]} | ${(await rows())[0]}`);
+step('a photon reaction plots without a temperature', p.names[3] === 'H (gamma,coherent) ENDF/B-VIII.1' && (await rows())[0].endsWith('\u2014'), `${p.names[3]} | ${(await rows())[0]}`);
 
 await page.waitForTimeout(300);
 const hash = await page.evaluate(() => location.hash);

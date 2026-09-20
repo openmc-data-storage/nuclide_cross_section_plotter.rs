@@ -47,7 +47,7 @@ test('a photon index expands with no temperatures and photon reaction names', ()
   assert.ok([...s.kind].every((k) => k === KIND_PHOTON));
   assert.equal(s.tmask[0], 0);
   assert.deepEqual([...s.mt], [502, 502, 504, 522], 'H (Z=1) before Fe (Z=26)');
-  assert.equal(reactionName(502, KIND_PHOTON), '(γ,coherent)');
+  assert.equal(reactionName(502, KIND_PHOTON), '(gamma,coherent)', 'spelled out, not the symbol');
   assert.equal(reactionName(16, 0), '(n,2n)');
 });
 
@@ -79,8 +79,13 @@ test('filters are exact when any value matches, else prefix, per column, ANDed',
   assert.deepEqual(mts(at294({ reaction: 'n,g' })), [102], 'g after the comma is gamma');
   assert.deepEqual(mts(at294({ reaction: 'fission' })), [18]);
   assert.deepEqual(mts(at294({ reaction: 'n,e' })), [2, 2, 2], 'prefix of the whole name: (n,elastic)');
-  assert.deepEqual(mts(at294({ reaction: '(γ' })), [502, 502, 504, 522]);
+  assert.deepEqual(mts(at294({ reaction: '(γ' })), [502, 502, 504, 522], 'a pasted symbol still works');
   assert.deepEqual(mts(at294({ reaction: 'γ,coh' })), [502, 502]);
+  assert.deepEqual(mts(at294({ reaction: 'gamma,' })), [502, 502, 504, 522], 'gamma with a comma lists the photon reactions');
+  assert.deepEqual(mts(at294({ reaction: 'g,' })), [502, 502, 504, 522], 'g, is gamma,');
+  assert.deepEqual(mts(at294({ reaction: 'g,coherent' })), [502, 502]);
+  assert.deepEqual(mts(at294({ reaction: 'photoelectric' })), [522], 'a photon product alone');
+  assert.deepEqual(mts(at294({ nucleons: 'photon' })), [], 'photon rows have no nucleons text to match');
   assert.deepEqual(names(at294({ library: 'jeff' })), ['Fe56']);
   assert.deepEqual(mts(at294({ element: 'Fe', library: 'endf', mt: '2' })), [2]);
   const onlyJeff = new Uint8Array(LIBRARIES.length); onlyJeff[LIBRARIES.findIndex((l) => l.id === 'jeff-4.0')] = 1;
