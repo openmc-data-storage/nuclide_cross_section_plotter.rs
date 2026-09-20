@@ -90,6 +90,7 @@ await page.check('#rows tr[data-row] .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 1, null, { timeout: 60000 });
 let p = await plot();
 step('ticking a row draws it at 294 K', p.names[0] === 'Li6 (n,t) ENDF/B-VIII.1 294 K' && p.lengths[0] > 100, JSON.stringify(p.names));
+step('the legend shows for a single trace', await page.evaluate(() => document.getElementById('plot').layout.showlegend === true && !!document.querySelector('#plot .legend .traces')));
 
 // The temperature dropdown lists every published temperature, 294 K ticked.
 step('the temperature filter starts at 294 K', (await page.textContent('#temperature-filter')) === '294 K', await page.textContent('#temperature-filter'));

@@ -86,6 +86,9 @@ export function buildFigure(series, { xLog = true, yLog = true, energyUnit = 'eV
       showspikes: true, spikemode: 'across', spikethickness: 1, spikecolor: INK_SECONDARY, spikedash: 'dot',
     },
     yaxis: { ...axisBase(yLog) },
+    // Shown even for one trace, which Plotly would otherwise hide: the legend
+    // is where the nuclide, reaction, library and temperature are named.
+    showlegend: true,
     legend: { orientation: 'h', y: -0.16, yanchor: 'top', font: { color: INK } },
     hovermode: 'x unified',
     hoverlabel: { bgcolor: '#26262a', bordercolor: GRID, font: { color: INK } },
