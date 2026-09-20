@@ -67,9 +67,9 @@ export function buildDictionaries(store) {
     seen.library.add(store.lib[i]);
   }
   for (const z of seen.element) dict.element.set(z, ATOMIC_SYMBOL[z].toLowerCase());
-  // Photon rows have no mass number; the cell reads "photon", so typing
-  // photon in the Nucleons box lists exactly them.
-  for (const k of seen.nucleons) dict.nucleons.set(k, k === 0 ? 'photon' : nucleonsLabel(k >> 4, k & 15).replace(' ', '').toLowerCase());
+  // Photon rows have no mass number and no nucleons text, so any term typed
+  // in that box hides them; they are found through Element or Reaction.
+  for (const k of seen.nucleons) dict.nucleons.set(k, nucleonsLabel(k >> 4, k & 15).replace(' ', '').toLowerCase());
   for (const k of seen.reaction) dict.reaction.set(k, reactionText(reactionName(k & 65535, k >= 65536 ? KIND_PHOTON : 0)));
   for (const mt of seen.mt) dict.mt.set(mt, String(mt));
   for (const lib of seen.library) dict.library.set(lib, `${LIBRARIES[lib].label} ${LIBRARIES[lib].id}`.toLowerCase());

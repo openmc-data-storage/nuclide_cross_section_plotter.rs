@@ -2,7 +2,7 @@
 
 The source of the Nuclide Cross Section Plotter hosted on [xsplot.com](https://xsplot.com).
 
-[Direct link to the web app](https://openmc-data-storage.github.io/nuclide_cross_section_plotter.rs/index.html)
+[Direct link to the web app](https://fusion-energy.github.io/nuclide_cross_section_plotter.rs/index.html)
 
 Search every published neutron and photon reaction across six nuclear data
 libraries and temperatures, compare libraries and temperatures on one plot,
