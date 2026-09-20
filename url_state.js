@@ -1,9 +1,9 @@
 // The plot as a URL: enabled libraries, selected rows and axis scales in the
 // hash, so a plot can be linked and comes back on reload.
 //
-//   #l=endf-b8.1,jendl-5.0&s=endf-b8.1:Fe56:294:16.102;endf-b8.1:Fe56:600:16;endf-b8.1:Fe::502&x=lin&y=lin
+//   #l=endf-b8.1,jendl-5.0&s=endf-b8.1:Fe56:294:16.102;endf-b8.1:Fe56:600:16;endf-b8.1:Fe::502&x=lin&y=lin&e=MeV
 //
-// Defaults are omitted: all libraries, both axes logarithmic. Selections are
+// Defaults are omitted: all libraries, both axes logarithmic, energy in eV. Selections are
 // grouped by (library, nuclide, temperature) with the MTs dotted; the
 // temperature is the bare Kelvin number and is empty for a photon row, which
 // has none. Anything unparseable is dropped rather than failing the page.
@@ -12,8 +12,8 @@ import { LIBRARIES, DEFAULT_LIBRARY } from './libraries.js';
 
 const LIBRARY_IDS = new Set(LIBRARIES.map((l) => l.id));
 
-/// `state`: {libraries: Set<id>, selection: Set<rowId>, xLog, yLog}. A row id
-/// is `library/name/mt` or `library/name/mt/294K`.
+/// `state`: {libraries: Set<id>, selection: Set<rowId>, xLog, yLog, energyUnit}.
+/// A row id is `library/name/mt` or `library/name/mt/294K`.
 export function encodeState(state) {
   const parts = [];
   const libs = [...state.libraries].filter((id) => LIBRARY_IDS.has(id));
@@ -36,6 +36,7 @@ export function encodeState(state) {
   }
   if (!state.xLog) parts.push('x=lin');
   if (!state.yLog) parts.push('y=lin');
+  if (state.energyUnit === 'MeV') parts.push('e=MeV');
   return parts.length ? `#${parts.join('&')}` : '';
 }
 
@@ -46,6 +47,7 @@ export function decodeState(hash) {
     selection: new Set(),
     xLog: true,
     yLog: true,
+    energyUnit: 'eV',
   };
   const text = (hash ?? '').replace(/^#/, '');
   if (!text) return state;
@@ -70,5 +72,6 @@ export function decodeState(hash) {
   }
   if (fields.get('x') === 'lin') state.xLog = false;
   if (fields.get('y') === 'lin') state.yLog = false;
+  if (fields.get('e') === 'MeV') state.energyUnit = 'MeV';
   return state;
 }

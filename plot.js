@@ -51,10 +51,15 @@ const axisBase = (log) => ({
   exponentformat: 'power',
 });
 
-/// `series`: array of {name, energy, xs, mt, slot}. Returns {data, layout, config}.
-export function buildFigure(series, { xLog = true, yLog = true } = {}) {
+/// Energy axis units on offer, with the factor from the data's eV.
+export const ENERGY_UNITS = Object.freeze({ eV: 1, MeV: 1e-6 });
+
+/// `series`: array of {name, energy, xs, mt, slot}; energies are in eV.
+/// Returns {data, layout, config}.
+export function buildFigure(series, { xLog = true, yLog = true, energyUnit = 'eV' } = {}) {
   const release = series.filter((s) => isEnergyRelease(s.mt));
   const mixed = release.length > 0 && release.length < series.length;
+  const scale = ENERGY_UNITS[energyUnit] ?? 1;
   const data = series.map((s) => {
     const { color, dash } = styleFor(s.slot);
     const unit = isEnergyRelease(s.mt) ? 'eV·barn' : 'barn';
@@ -62,7 +67,7 @@ export function buildFigure(series, { xLog = true, yLog = true } = {}) {
       type: 'scattergl',
       mode: 'lines',
       name: s.name,
-      x: s.energy,
+      x: scale === 1 ? s.energy : s.energy.map((e) => e * scale),
       y: s.xs,
       line: { color, dash, width: 2 },
       yaxis: mixed && isEnergyRelease(s.mt) ? 'y2' : 'y',
@@ -77,7 +82,7 @@ export function buildFigure(series, { xLog = true, yLog = true } = {}) {
     margin: { l: 80, r: mixed ? 80 : 30, t: 20, b: 60 },
     xaxis: {
       ...axisBase(xLog),
-      title: { text: 'Energy (eV)', font: { color: INK } },
+      title: { text: `Energy (${energyUnit})`, font: { color: INK } },
       showspikes: true, spikemode: 'across', spikethickness: 1, spikecolor: INK_SECONDARY, spikedash: 'dot',
     },
     yaxis: { ...axisBase(yLog) },

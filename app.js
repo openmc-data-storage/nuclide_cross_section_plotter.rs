@@ -271,7 +271,7 @@ function drawPlot(wanted) {
     });
   }
   if (errors.length) showError([...new Set(errors)].join('\n')); else clearError();
-  const { data, layout, config } = buildFigure(drawn, { xLog: state.xLog, yLog: state.yLog });
+  const { data, layout, config } = buildFigure(drawn, { xLog: state.xLog, yLog: state.yLog, energyUnit: state.energyUnit });
   Plotly.react('plot', data, layout, config);
   currentSeries = drawn;
   $('download-json').disabled = $('download-csv').disabled = drawn.length === 0;
@@ -310,6 +310,7 @@ function applyUrl() {
   state.selection = decoded.selection;
   state.xLog = decoded.xLog;
   state.yLog = decoded.yLog;
+  state.energyUnit = decoded.energyUnit;
   renderControls();
   loadEnabledLibraries();
   resolveRowFacts();
@@ -323,6 +324,7 @@ function renderControls() {
   for (const box of document.querySelectorAll('#libraries input')) box.checked = state.libraries.has(box.value);
   $('x-scale').textContent = state.xLog ? 'X: log' : 'X: linear';
   $('y-scale').textContent = state.yLog ? 'Y: log' : 'Y: linear';
+  $('x-unit').textContent = `Energy: ${state.energyUnit}`;
 }
 
 function buildControls() {
@@ -389,6 +391,7 @@ function buildControls() {
   });
   $('x-scale').addEventListener('click', () => { state.xLog = !state.xLog; renderControls(); drawPlot(wantedSeries()); syncUrl(); });
   $('y-scale').addEventListener('click', () => { state.yLog = !state.yLog; renderControls(); drawPlot(wantedSeries()); syncUrl(); });
+  $('x-unit').addEventListener('click', () => { state.energyUnit = state.energyUnit === 'eV' ? 'MeV' : 'eV'; renderControls(); drawPlot(wantedSeries()); syncUrl(); });
   $('download-json').addEventListener('click', () => downloadText('xsplot_cross_sections.json', seriesToJson(exportSeries()), 'application/json'));
   $('download-csv').addEventListener('click', () => downloadText('xsplot_cross_sections.csv', seriesToCsv(exportSeries()), 'text/csv'));
   window.addEventListener('hashchange', applyUrl);

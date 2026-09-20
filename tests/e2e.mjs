@@ -52,7 +52,7 @@ await page.route('https://yamc-data.xsplot.com/**', (route) => {
 
 const plot = () => page.evaluate(() => {
   const g = document.getElementById('plot');
-  return { names: g.data.map((d) => d.name), lengths: g.data.map((d) => d.x.length), onY2: g.data.map((d) => d.yaxis ?? 'y'), y: g.layout.yaxis.title.text, y2: g.layout.yaxis2?.title.text ?? null, ytype: g.layout.yaxis.type };
+  return { names: g.data.map((d) => d.name), lengths: g.data.map((d) => d.x.length), onY2: g.data.map((d) => d.yaxis ?? 'y'), y: g.layout.yaxis.title.text, y2: g.layout.yaxis2?.title.text ?? null, ytype: g.layout.yaxis.type, x: g.layout.xaxis.title.text, x0: g.data[0]?.x[0] ?? null };
 });
 const step = (name, ok, detail = '') => { console.log(`${ok ? 'ok' : 'FAIL'} - ${name}${detail ? `: ${detail}` : ''}`); if (!ok) process.exitCode = 1; };
 const rows = () => page.evaluate(() => [...document.querySelectorAll('#rows tr[data-row]')].map((tr) => tr.innerText.replace(/\s+/g, ' ').trim()));
@@ -105,6 +105,11 @@ await page.click('#y-scale');
 p = await plot();
 step('the Y toggle switches to linear', p.ytype === 'linear');
 
+const x0eV = p.x0;
+await page.click('#x-unit');
+p = await plot();
+step('the energy unit toggle rescales the X axis to MeV', p.x === 'Energy (MeV)' && Math.abs(p.x0 - x0eV * 1e-6) < 1e-18 && (await page.textContent('#x-unit')) === 'Energy: MeV', `${p.x} ${p.x0}`);
+
 await page.fill('.filter-input[data-column=element]', 'H');
 await page.fill('.filter-input[data-column=nucleons]', '');
 await page.fill('.filter-input[data-column=mt]', '502');
@@ -116,14 +121,14 @@ step('a photon reaction plots without a temperature', p.names[3] === 'H (γ,cohe
 
 await page.waitForTimeout(300);
 const hash = await page.evaluate(() => location.hash);
-step('the URL carries the state', hash.includes('s=endf-b8.1:Li6:294:105.301;endf-b8.1:Li6:2500:105;endf-b8.1:H::502') && hash.includes('y=lin'), hash);
+step('the URL carries the state', hash.includes('s=endf-b8.1:Li6:294:105.301;endf-b8.1:Li6:2500:105;endf-b8.1:H::502') && hash.includes('y=lin') && hash.includes('e=MeV'), hash);
 
 await page.screenshot({ path: `${SHOTS}plot${noRange ? '-no-range' : ''}.png`, fullPage: true });
 
 await page.goto(`${url}index.html${hash}`, { waitUntil: 'load' });
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 4, null, { timeout: 90000 });
 p = await plot();
-step('reloading the URL restores the plot', p.names.length === 4 && p.ytype === 'linear');
+step('reloading the URL restores the plot', p.names.length === 4 && p.ytype === 'linear' && p.x === 'Energy (MeV)', `${p.x}`);
 
 // Read the download by watching the blob handed to createObjectURL; the real
 // URL is still made so the click stays harmless.
@@ -134,7 +139,7 @@ const downloaded = await page.evaluate(() => new Promise((resolve) => {
   setTimeout(() => { URL.createObjectURL = orig; }, 0);
 }));
 const parsed = JSON.parse(downloaded);
-step('the JSON download has one object per series with units', parsed.length === 4 && parsed.every((s) => s.energy_eV.length === s.xs.length && s.units) && parsed.some((s) => s.units === 'eV barn') && parsed.some((s) => s.temperature_K === 2500), `${parsed.length} series`);
+step('the JSON download has one object per series with units, energies in eV', parsed.length === 4 && parsed.every((s) => s.energy_eV.length === s.xs.length && s.units) && parsed.some((s) => s.units === 'eV barn') && parsed.some((s) => s.temperature_K === 2500) && parsed[0].energy_eV[0] > 1e-6, `${parsed.length} series, first energy ${parsed[0].energy_eV[0]}`);
 
 const errorText = await page.textContent('#error');
 step('no error is shown', errorText.trim() === '', errorText.trim());

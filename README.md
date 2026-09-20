@@ -62,9 +62,10 @@ python3 -m http.server 8000 &
 node tests/e2e.mjs       # drives the page in headless Chromium
 ```
 
-The sharing URL keeps the enabled libraries, temperatures, selected reactions
-and axis scales in the hash, for example
-`#l=endf-b8.1,jeff-4.0&s=endf-b8.1:Fe56:294:16.102;endf-b8.1:Fe56:600:16;jeff-4.0:Li6:294:1`.
+The energy axis can be shown in eV or MeV; downloads are always in eV. The
+sharing URL keeps the enabled libraries, selected reactions, axis scales and
+energy unit in the hash, for example
+`#l=endf-b8.1,jeff-4.0&s=endf-b8.1:Fe56:294:16.102;endf-b8.1:Fe56:600:16;jeff-4.0:Li6:294:1&e=MeV`.
 
 ## Browser support
 
