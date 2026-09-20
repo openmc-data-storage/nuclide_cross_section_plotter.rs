@@ -41,7 +41,7 @@ export function temperatureLabel(store, bit) {
   return label ? label.replace(/K$/, ' K') : '';
 }
 
-/// The reaction name shown for a row: `(n,2n)`, `(γ,coherent)`, or `MT 999`.
+/// The reaction name shown for a row: `(n,2n)`, `(gamma,coherent)`, or `MT 999`.
 export function reactionName(mt, kind) {
   if (kind === KIND_PHOTON) return PHOTON_MTS[mt]?.name ?? `MT ${mt}`;
   return MT_NAMES[mt] ?? `MT ${mt}`;
@@ -97,9 +97,9 @@ function rankArray(orderedKeys, size) {
   return r;
 }
 
-/// A reaction name as the filter sees it: lowercase, brackets dropped, and γ
-/// spelled gamma, so `(n,2n)` and `n,2n` are the same thing to type and a
-/// photon reaction can be typed at all.
+/// A reaction name as the filter sees it: lowercase, brackets dropped, and a
+/// γ (which the table does not show, but someone may paste) spelled gamma, so
+/// `(n,2n)` and `n,2n` are the same thing to type.
 export function reactionText(name) {
   return name.toLowerCase().replace(/[()]/g, '').replace(/γ/g, 'gamma');
 }
