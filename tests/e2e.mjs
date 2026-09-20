@@ -13,7 +13,8 @@ import { chromium } from 'playwright';
 
 const args = process.argv.slice(2);
 const noRange = args.includes('--no-range');
-const url = args[args.indexOf('--url') + 1] || 'http://127.0.0.1:8000/';
+const urlIndex = args.indexOf('--url');
+const url = urlIndex >= 0 ? args[urlIndex + 1] : 'http://127.0.0.1:8000/';
 const FIX = new URL('./fixtures/', import.meta.url).pathname;
 const SHOTS = new URL('./screenshots/', import.meta.url).pathname;
 mkdirSync(SHOTS, { recursive: true });
