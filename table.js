@@ -67,7 +67,9 @@ export function buildDictionaries(store) {
     seen.library.add(store.lib[i]);
   }
   for (const z of seen.element) dict.element.set(z, ATOMIC_SYMBOL[z].toLowerCase());
-  for (const k of seen.nucleons) dict.nucleons.set(k, nucleonsLabel(k >> 4, k & 15).replace(' ', '').toLowerCase());
+  // Photon rows have no mass number; the cell reads "photon", so typing
+  // photon in the Nucleons box lists exactly them.
+  for (const k of seen.nucleons) dict.nucleons.set(k, k === 0 ? 'photon' : nucleonsLabel(k >> 4, k & 15).replace(' ', '').toLowerCase());
   for (const k of seen.reaction) dict.reaction.set(k, reactionText(reactionName(k & 65535, k >= 65536 ? KIND_PHOTON : 0)));
   for (const mt of seen.mt) dict.mt.set(mt, String(mt));
   for (const lib of seen.library) dict.library.set(lib, `${LIBRARIES[lib].label} ${LIBRARIES[lib].id}`.toLowerCase());
@@ -95,22 +97,28 @@ function rankArray(orderedKeys, size) {
   return r;
 }
 
-/// A reaction name as the filter sees it: lowercase, brackets dropped, so
-/// `(n,2n)` and `n,2n` are the same thing to type.
+/// A reaction name as the filter sees it: lowercase, brackets dropped, and γ
+/// spelled gamma, so `(n,2n)` and `n,2n` are the same thing to type and a
+/// photon reaction can be typed at all.
 export function reactionText(name) {
-  return name.toLowerCase().replace(/[()]/g, '');
+  return name.toLowerCase().replace(/[()]/g, '').replace(/γ/g, 'gamma');
 }
 
-/// The keys a reaction term admits. Brackets are ignored on both sides, and a
-/// lone `g` after the comma means gamma. Tiers, first non-empty wins: the
-/// whole name exactly (`n,2n`), the product exactly (`2n`, `p`, `total`), the
-/// whole name by prefix (`n,2`), the product by prefix (`2n` when no channel
-/// is exactly that). Exact before prefix keeps `p` at (n,p) rather than every
-/// proton channel.
+/// The keys a reaction term admits. Brackets are ignored on both sides, γ may
+/// be typed as gamma, and a lone `g` before or after the comma means gamma
+/// (`g,coherent`, `n,g`). Tiers, first non-empty wins: the whole name exactly
+/// (`n,2n`), the product exactly (`2n`, `p`, `total`), the whole name by
+/// prefix (`n,2`, `gamma,`), the product by prefix (`2n` when no channel is
+/// exactly that). Exact before prefix keeps `p` at (n,p) rather than every
+/// proton channel, and `gamma` at (n,gamma) rather than every photon row;
+/// `gamma,` or `g,` lists the photon reactions.
 export function allowedReactionKeys(dictionary, term) {
-  let t = reactionText(term.trim());
+  // A γ typed on its own can only mean the photon reactions, so it reads as
+  // `gamma,` rather than the capture product.
+  const raw = term.trim().replace(/[()]/g, '');
+  let t = raw === 'γ' ? 'gamma,' : reactionText(raw);
   if (!t) return [...dictionary.keys()];
-  t = t.replace(/(^|,)g$/, '$1gamma');
+  t = t.replace(/(^|,)g$/, '$1gamma').replace(/^g,/, 'gamma,');
   const tiers = [[], [], [], []];
   for (const [key, text] of dictionary) {
     const product = text.slice(text.indexOf(',') + 1);
