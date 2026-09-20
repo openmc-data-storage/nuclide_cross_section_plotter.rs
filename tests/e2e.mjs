@@ -69,6 +69,9 @@ await page.waitForFunction(() => document.getElementById('busy').classList.conta
 const counter = await page.textContent('#counter');
 step('table lists Li6, Li7 and photon H', /· \d+ reactions match/.test(counter), counter);
 
+const titles = await page.evaluate(() => [...document.querySelectorAll('#reactions thead tr:first-child th')].map((th) => th.getAttribute('title') ?? ''));
+step('every column heading explains itself on hover', titles.length === 7 && titles.every((t) => t.length > 20), `${titles.filter((t) => t.length > 20).length} of ${titles.length} have a title`);
+
 // The library filter is a dropdown of checkboxes; the hash enabled one library.
 step('the library filter names the one enabled library', (await page.textContent('#library-filter')) === 'ENDF/B-VIII.1', await page.textContent('#library-filter'));
 await page.click('#library-filter');
