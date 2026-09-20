@@ -329,18 +329,21 @@ function applyUrl() {
 
 // --- controls -----------------------------------------------------------------------
 
-/// What a checkbox dropdown's button reads: everything, the one choice, or a count.
-function checkFilterLabel(selected, all, noun, labelOf) {
-  if (selected.size === all.length) return `All ${noun}s`;
+/// What a checkbox dropdown's button reads: everything, the one choice, or a
+/// count. The count stays short so it fits the column.
+function checkFilterLabel(selected, all, plural, labelOf) {
+  if (selected.size === all.length) return `All ${plural}`;
   if (selected.size === 1) return labelOf([...selected][0]);
-  return `${selected.size} of ${all.length} ${noun}s`;
+  return `${selected.size} of ${all.length}`;
 }
 
 function renderControls() {
   for (const box of document.querySelectorAll('#library-menu input')) box.checked = state.libraries.has(box.value);
-  $('library-filter').textContent = checkFilterLabel(state.libraries, LIBRARIES, 'library', libraryLabel).replace(/librarys$/, 'libraries');
+  $('library-filter').textContent = checkFilterLabel(state.libraries, LIBRARIES, 'libraries', libraryLabel);
+  $('library-filter').classList.toggle('narrowed', state.libraries.size < LIBRARIES.length);
   for (const box of document.querySelectorAll('#temperature-menu input')) box.checked = state.temperatureFilter.has(box.value);
-  $('temperature-filter').textContent = checkFilterLabel(state.temperatureFilter, TEMPERATURES, 'temperature', temperatureText);
+  $('temperature-filter').textContent = checkFilterLabel(state.temperatureFilter, TEMPERATURES, 'temperatures', temperatureText);
+  $('temperature-filter').classList.toggle('narrowed', state.temperatureFilter.size < TEMPERATURES.length);
   $('x-scale').textContent = state.xLog ? 'X: log' : 'X: linear';
   $('y-scale').textContent = state.yLog ? 'Y: log' : 'Y: linear';
   $('x-unit').textContent = `Energy: ${state.energyUnit}`;

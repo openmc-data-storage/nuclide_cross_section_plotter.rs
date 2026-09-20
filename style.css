@@ -23,9 +23,31 @@ h1 {
   font-style: italic;
 }
 
-/* Filter boxes sit in the header row of the table, one per column. */
+/* Filter boxes sit in the header row of the table, one per column. A box with
+   something typed in it, or a dropdown that narrows the list, is bold on a
+   blue field so an active filter cannot be mistaken for a placeholder. */
 .filter-input {
   min-width: 6rem;
+}
+
+.filter-input::placeholder {
+  color: #7d838c;
+  font-style: italic;
+  opacity: 1;
+}
+
+.filter-input:not(:placeholder-shown),
+.check-filter.narrowed {
+  color: #ffffff;
+  font-weight: 600;
+  background-color: #1d3e66;
+  border-color: #3987e5;
+}
+
+.filter-input:not(:placeholder-shown):focus,
+.check-filter.narrowed:focus {
+  background-color: #1d3e66;
+  color: #ffffff;
 }
 
 /* The library and temperature filters are dropdowns of checkboxes. The menu is
@@ -33,6 +55,9 @@ h1 {
 .check-filter {
   min-width: 9rem;
   cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .check-menu {

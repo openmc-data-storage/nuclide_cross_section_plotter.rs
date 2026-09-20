@@ -96,7 +96,13 @@ step('the dropdown lists all seven temperatures', tmenu.join(',') === '250 K,294
 // Ticking 2500 K as well lists the reaction at both temperatures; the new row is another tick.
 await page.click('#temp-2500K');
 await page.waitForFunction(() => document.querySelectorAll('#rows tr[data-row]').length === 2, null, { timeout: 15000 });
-step('ticking 2500 K adds its row', (await rows())[1] === 'Li 6 (n,t) 105 ENDF/B-VIII.1 2500 K' && (await page.textContent('#temperature-filter')) === '2 of 7 temperatures', (await rows()).join(' | '));
+step('ticking 2500 K adds its row', (await rows())[1] === 'Li 6 (n,t) 105 ENDF/B-VIII.1 2500 K' && (await page.textContent('#temperature-filter')) === '2 of 7', (await rows()).join(' | '));
+step('an active filter is highlighted', await page.evaluate(() => {
+  const typed = getComputedStyle(document.querySelector('.filter-input[data-column=element]'));
+  const empty = getComputedStyle(document.querySelector('.filter-input[data-column=reaction]'));
+  return typed.borderColor !== empty.borderColor && typed.fontWeight !== empty.fontWeight
+    && document.getElementById('temperature-filter').classList.contains('narrowed');
+}));
 await page.keyboard.press('Escape');
 await page.check('#rows tr[data-row]:nth-child(2) .row-select');
 await page.waitForFunction(() => document.getElementById('plot')?.data?.length === 2, null, { timeout: 60000 });
