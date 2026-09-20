@@ -41,3 +41,17 @@ test('garbage is dropped and defaults restored', () => {
   assert.deepEqual([...back.selection].sort(), ['endf-b8.1/Fe/502', 'endf-b8.1/Fe56/16/294K']);
   assert.equal(back.yLog, false);
 });
+
+test('every example link on the page decodes to a full selection', async () => {
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const hrefs = [...html.matchAll(/<a href="(#s=[^"]+)"/g)].map((m) => m[1]);
+  assert.equal(hrefs.length, 7, 'seven example plots');
+  for (const href of hrefs) {
+    const groups = href.slice(3).split(';');
+    const expected = groups.reduce((n, g) => n + g.split(':')[3].split('.').length, 0);
+    const state = decodeState(href);
+    assert.equal(state.selection.size, expected, `${href} keeps every reaction`);
+    assert.equal(encodeState({ ...state, libraries: allLibs }), href, `${href} round-trips`);
+  }
+});

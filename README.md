@@ -34,6 +34,16 @@ unbroadened 0 K grid where only elastic scattering is published. Photon
 cross sections (coherent, incoherent, photoelectric and pair production) are
 per element and have no temperature.
 
+## Example plots
+
+The links under the headline open ready-made plots: tritium breeding
+(Li6 and Li7 (n,Xt) with Be9 and lead (n,2n) at 900 K, mixed libraries), one
+reaction in six libraries (Fe56 (n,2n)), Doppler broadening (U238 capture at
+six temperatures), neutron absorbers (B10, Li6, He3, Gd157, Cd113, Xe135),
+fission (U233, U235, Pu239, U238, Th232), activation foils (Ni58, Al27, Fe56,
+Nb93, In115, Au197) and photon interactions in lead. Each is just a URL hash,
+so any plot you make can be shared the same way.
+
 ## Files
 
 - `index.html`, `style.css`, `app.js`: the page and its controller
