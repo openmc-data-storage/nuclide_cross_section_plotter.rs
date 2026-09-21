@@ -87,7 +87,9 @@ th.sortable {
   white-space: nowrap;
 }
 
-th.sortable .fa-solid {
+th.sortable .sort-icon {
+  width: 0.75em;
+  height: 0.75em;
   margin-left: 0.3rem;
   opacity: 0.6;
 }

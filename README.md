@@ -11,7 +11,9 @@ temperature. The Library and Temperature columns are filtered with dropdowns
 of checkboxes; the temperature dropdown lists all seven published
 temperatures (250, 294, 600, 900, 1200 and 2500 K, plus 0 K for elastic
 scattering only) and starts with 294 K ticked. The page is a static site
-with no build step: plain JavaScript modules, Bootstrap and Plotly.
+with no build step: plain JavaScript modules, Bootstrap and Plotly. Every
+file it loads is served from this repository, so opening the page contacts no
+third party.
 
 ## Where the data comes from
 
@@ -47,7 +49,9 @@ so any plot you make can be shared the same way.
 ## Files
 
 - `index.html`, `style.css`, `app.js`: the page and its controller
-- `worker.js`: Web Worker that fetches and decodes; `deps.browser.js` names the CDN builds it uses
+- `worker.js`: Web Worker that fetches and decodes; `deps.browser.js` names the vendored builds it uses
+- `vendor/`: Bootstrap, Plotly, apache-arrow and lz4js, copied in at pinned versions rather than loaded from a CDN
+- `privacy.html`: the privacy notice linked from the page footer
 - `engine.js`: fetch planning, byte-range splicing and caching; `arrow.js`: Arrow decoding
 - `index_loader.js`, `table.js`: the reaction table (typed-array store, filters, sort, pages)
 - `plot.js`, `url_state.js`, `download.js`: the figure, the shareable URL hash, JSON and CSV export

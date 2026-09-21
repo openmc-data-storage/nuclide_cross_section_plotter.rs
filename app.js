@@ -205,9 +205,9 @@ function renderTable() {
   $('counter').textContent = `${state.selection.size} selected · ${page.total.toLocaleString()} reactions match`;
   renderPagination(page);
   for (const th of document.querySelectorAll('th.sortable')) {
-    const icon = th.querySelector('i');
+    const use = th.querySelector('.sort-icon use');
     const active = th.dataset.column === state.sort.column;
-    icon.className = `fa-solid ${active ? (state.sort.descending ? 'fa-sort-down' : 'fa-sort-up') : 'fa-sort'}`;
+    use.setAttribute('href', active ? (state.sort.descending ? '#icon-sort-down' : '#icon-sort-up') : '#icon-sort');
   }
 }
 
