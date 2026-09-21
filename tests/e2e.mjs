@@ -4,7 +4,8 @@
 // (Li6 and Li7 only, H for photons), and Li6's Arrow files, with `Range`
 // honoured (206) the way the real origin does it. With `--no-range` every
 // request is answered whole with a 200, the case of a proxy that strips the
-// header, and the same steps must still pass. CDN requests pass through.
+// header, and the same steps must still pass. Everything else the page loads
+// is served from the repository, so the run needs no network beyond this.
 //
 // Usage: python3 -m http.server 8000 & node tests/e2e.mjs [--no-range] [--url http://127.0.0.1:8000/]
 
@@ -138,7 +139,7 @@ p = await plot();
 step('the Y toggle switches to linear', p.ytype === 'linear');
 
 // Sorting cycles ascending, descending, unsorted.
-const sortIcon = () => page.evaluate(() => document.querySelector('th[data-column=mt] i').className);
+const sortIcon = () => page.evaluate(() => document.querySelector('th[data-column=mt] .sort-icon use').getAttribute('href'));
 await page.fill('.filter-input[data-column=mt]', '');
 await page.waitForFunction(() => document.querySelectorAll('#rows tr[data-row]').length > 1, null, { timeout: 15000 });
 const firstMt = () => page.evaluate(() => document.querySelector('#rows tr[data-row] td:nth-child(5)').textContent);
@@ -149,7 +150,7 @@ await page.click('th[data-column=mt]');
 const desc = await sortIcon(); const descFirst = await firstMt();
 await page.click('th[data-column=mt]');
 const back = await sortIcon();
-step('a heading cycles ascending, descending, unsorted', asc.includes('fa-sort-up') && desc.includes('fa-sort-down') && back.endsWith('fa-sort') && Number(descFirst) > Number(ascFirst) && (await firstMt()) === unsortedFirst, `${asc} / ${desc} / ${back}, first MT ${ascFirst} / ${descFirst} / ${unsortedFirst}`);
+step('a heading cycles ascending, descending, unsorted', asc === '#icon-sort-up' && desc === '#icon-sort-down' && back === '#icon-sort' && Number(descFirst) > Number(ascFirst) && (await firstMt()) === unsortedFirst, `${asc} / ${desc} / ${back}, first MT ${ascFirst} / ${descFirst} / ${unsortedFirst}`);
 await page.fill('.filter-input[data-column=mt]', '301');
 await waitForRow('heating 301');
 

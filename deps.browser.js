@@ -1,11 +1,11 @@
-// The two third-party libraries the worker needs, from a CDN so the site has
-// no build step. This is the only file naming a CDN URL; the tests import the
-// same packages from npm instead, and vendoring later means changing two lines.
+// The two third-party libraries the worker needs, served from this repository
+// so that loading the page contacts no host other than the one serving it.
+// The tests import the same packages from npm instead.
 //
-// Versions are pinned exactly: the `+esm` bundles are rewritten by the CDN, so
-// an integrity hash cannot be used, and a floating version could change the
-// decoder under a published page.
+// Versions are pinned in the file names: these are the `+esm` bundles that
+// jsDelivr built for apache-arrow@21.2.0 and lz4js@0.2.0, copied into
+// `vendor/` unchanged apart from a stripped source map comment.
 
-export * as arrow from 'https://cdn.jsdelivr.net/npm/apache-arrow@21.2.0/+esm';
-import lz4 from 'https://cdn.jsdelivr.net/npm/lz4js@0.2.0/+esm';
+export * as arrow from './vendor/apache-arrow-21.2.0.esm.js';
+import lz4 from './vendor/lz4js-0.2.0.esm.js';
 export const lz4Decompress = (bytes) => lz4.decompress(bytes);
